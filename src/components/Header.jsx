@@ -7,6 +7,13 @@ const USER_LIST = [
   { id: 'employee', label: 'Simone',  sublabel: 'Employee',    initials: 'S' },
 ];
 
+const TYPE_COLORS = {
+  info:    { bg: '#eff6ff', text: '#2563eb', dot: '#3b82f6' },
+  warning: { bg: '#fffbeb', text: '#d97706', dot: '#f59e0b' },
+  success: { bg: '#f0fdf4', text: '#059669', dot: '#10b981' },
+  error:   { bg: '#fff1f2', text: '#dc2626', dot: '#ef4444' },
+};
+
 function Avatar({ initials, size = 32, bg }) {
   return (
     <div style={{
@@ -20,20 +27,39 @@ function Avatar({ initials, size = 32, bg }) {
   );
 }
 
-export default function Header({ user, currentUser, setCurrentUser }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+function timeAgo(date) {
+  const secs = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (secs < 60) return 'just now';
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  return `${Math.floor(mins / 60)}h ago`;
+}
 
-  // Close dropdown when clicking outside
+export default function Header({ user, currentUser, setCurrentUser, notifications = [], markNotificationsRead }) {
+  const [open, setOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const ref = useRef(null);
+  const bellRef = useRef(null);
+  const helpRef = useRef(null);
+
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
+      if (helpRef.current && !helpRef.current.contains(e.target)) setHelpOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  const unread = notifications.filter(n => !n.read).length;
   const currentEntry = USER_LIST.find(u => u.id === currentUser);
+
+  function handleBellOpen() {
+    setBellOpen(o => !o);
+    if (!bellOpen && unread > 0) markNotificationsRead?.();
+  }
 
   return (
     <header style={{
@@ -48,14 +74,14 @@ export default function Header({ user, currentUser, setCurrentUser }) {
         maxWidth: 1600, margin: '0 auto',
       }}>
 
-        {/* Logo image */}
+        {/* Logo */}
         <img
           src="/image.png"
           alt="Readily"
           style={{ height: 36, objectFit: 'contain', userSelect: 'none' }}
         />
 
-        {/* User selector — centre */}
+        {/* User selector */}
         <div ref={ref} style={{ position: 'relative' }}>
           <button
             onClick={() => setOpen(o => !o)}
@@ -78,7 +104,6 @@ export default function Header({ user, currentUser, setCurrentUser }) {
                 {currentEntry.sublabel}
               </div>
             </div>
-            {/* Chevron */}
             <svg
               width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
@@ -88,7 +113,6 @@ export default function Header({ user, currentUser, setCurrentUser }) {
             </svg>
           </button>
 
-          {/* Dropdown */}
           {open && (
             <div style={{
               position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
@@ -140,15 +164,154 @@ export default function Header({ user, currentUser, setCurrentUser }) {
         </div>
 
         {/* Right nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-          <a href="#" onClick={e => e.preventDefault()}
-            style={{ color: '#6b7280', fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
-            help
-          </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div ref={helpRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setHelpOpen(o => !o)}
+              style={{
+                color: helpOpen ? '#7c3aed' : '#6b7280',
+                fontSize: 13,
+                fontWeight: 500,
+                background: 'none',
+                border: 'none',
+                padding: 0,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              help
+            </button>
+            {helpOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 12px)', right: -70,
+                width: 300, background: 'white', borderRadius: 14,
+                boxShadow: '0 8px 32px rgba(30,27,75,0.15), 0 2px 8px rgba(0,0,0,0.06)',
+                border: '1px solid rgba(124,58,237,0.12)',
+                padding: 16, zIndex: 220,
+              }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 8 }}>
+                  Help Centre
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                  {[
+                    { title: 'HR overview', text: 'Shows readiness, live staffing status, active risks, department coverage, escalations, and staff announcements.' },
+                    { title: 'Team lead view', text: 'Shows today’s absences, critical-role coverage, the weekly location schedule, and team-level analytics.' },
+                    { title: 'Employee view', text: 'Lets staff report absence or WFH, view announcements, check their desk area, and review absence history.' },
+                  ].map(item => (
+                    <div key={item.title} style={{ paddingBottom: 9, borderBottom: '1px solid #f3f4f6' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#7c3aed' }}>{item.title}</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.45, marginTop: 2 }}>{item.text}</div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setHelpOpen(false)}
+                  style={{
+                    marginTop: 12, width: '100%', padding: '8px 10px', borderRadius: 9,
+                    border: '1px solid #e9d5ff', background: '#f8f7ff',
+                    color: '#7c3aed', fontFamily: 'inherit', fontSize: 11,
+                    fontWeight: 800, cursor: 'pointer',
+                  }}
+                >
+                  Got it
+                </button>
+              </div>
+            )}
+          </div>
           <a href="#" onClick={e => e.preventDefault()}
             style={{ color: '#6b7280', fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
             portal
           </a>
+
+          {/* Notification bell */}
+          <div ref={bellRef} style={{ position: 'relative' }}>
+            <button
+              onClick={handleBellOpen}
+              style={{
+                position: 'relative', background: 'none', border: 'none',
+                cursor: 'pointer', padding: 6, borderRadius: 8,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.12s',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.06)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke={bellOpen ? '#7c3aed' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unread > 0 && (
+                <span style={{
+                  position: 'absolute', top: 2, right: 2,
+                  background: '#dc2626', color: 'white',
+                  borderRadius: '50%', width: 16, height: 16,
+                  fontSize: 10, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  border: '2px solid white',
+                }}>
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                background: 'white', borderRadius: 14,
+                boxShadow: '0 8px 32px rgba(30,27,75,0.15), 0 2px 8px rgba(0,0,0,0.06)',
+                border: '1px solid rgba(124,58,237,0.12)',
+                minWidth: 300, maxWidth: 360,
+                zIndex: 200, overflow: 'hidden',
+              }}>
+                <div style={{
+                  padding: '12px 16px 8px',
+                  borderBottom: '1px solid #f3f4f6',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>Notifications</span>
+                  {notifications.length > 0 && (
+                    <span style={{ fontSize: 11, color: '#7c3aed', fontWeight: 500 }}>
+                      {notifications.filter(n => !n.read).length > 0 ? 'All read' : ''}
+                    </span>
+                  )}
+                </div>
+                <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+                  {notifications.length === 0 ? (
+                    <div style={{ padding: '24px 16px', textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+                      No notifications yet
+                    </div>
+                  ) : (
+                    notifications.map(n => {
+                      const tc = TYPE_COLORS[n.type] || TYPE_COLORS.info;
+                      return (
+                        <div key={n.id} style={{
+                          display: 'flex', alignItems: 'flex-start', gap: 10,
+                          padding: '10px 16px',
+                          background: n.read ? 'white' : 'rgba(124,58,237,0.03)',
+                          borderBottom: '1px solid #f9fafb',
+                        }}>
+                          <span style={{
+                            width: 8, height: 8, borderRadius: '50%',
+                            background: tc.dot, flexShrink: 0, marginTop: 4,
+                          }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ margin: 0, fontSize: 13, color: '#374151', lineHeight: 1.4 }}>
+                              {n.message}
+                            </p>
+                            <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9ca3af' }}>
+                              {timeAgo(n.time)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <Avatar initials={user.initials} size={36} bg={user.avatarBg} />
         </div>
       </div>
