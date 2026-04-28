@@ -5,57 +5,14 @@ import {
 } from 'recharts';
 import WorldMap from './WorldMap';
 import TeamLocator from './TeamLocator';
-import { TEAM_LEAD_DATA, avatarColor } from '../data';
-
-const card = {
-  background: 'rgba(255,255,255,0.88)',
-  backdropFilter: 'blur(10px)',
-  borderRadius: 16,
-  boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-  border: '1px solid rgba(255,255,255,0.9)',
-  padding: 18,
-};
+import { card, Avatar, TabBar, StatCard, PageHeader, EmptyState } from './shared';
+import { TEAM_LEAD_DATA } from '../data';
 
 const STATUS_CONFIG = {
   available: { dot: '#10b981', label: 'In',  labelColor: '#059669' },
   absent:    { dot: '#ef4444', label: 'Out', labelColor: '#dc2626' },
   wfh:       { dot: '#6366f1', label: 'WFH', labelColor: '#4f46e5' },
 };
-
-function TabBar({ active, onChange }) {
-  const tabs = [
-    { key: 'team',      label: 'My Team'   },
-    { key: 'analytics', label: 'Analytics' },
-  ];
-  return (
-    <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 14, padding: 4, marginBottom: 24, width: 'fit-content' }}>
-      {tabs.map(t => (
-        <button key={t.key} onClick={() => onChange(t.key)} style={{
-          padding: '9px 26px', borderRadius: 11, border: 'none',
-          background: active === t.key ? 'white' : 'transparent',
-          color: active === t.key ? '#1e1b4b' : '#9ca3af',
-          fontFamily: 'inherit', fontWeight: active === t.key ? 700 : 500,
-          fontSize: 13, cursor: 'pointer',
-          boxShadow: active === t.key ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-          transition: 'all 0.15s',
-        }}>{t.label}</button>
-      ))}
-    </div>
-  );
-}
-
-function Avatar({ initials, size = 32 }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: avatarColor(initials), color: 'white',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.35, fontWeight: 700, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
 
 function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   const [notes, setNotes] = useState('');
@@ -154,16 +111,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-          Good morning, {user.name}
-        </h1>
-      </div>
-
+      <PageHeader name={user.name} subtitle="Team Lead Dashboard" />
 
       {/* Escalation banner — always visible */}
       {escalation && (
@@ -186,23 +134,43 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
         </div>
       )}
 
-      <TabBar active={activeTab} onChange={setActiveTab} />
+      <TabBar
+        active={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          { key: 'team',      label: 'My Team' },
+          { key: 'analytics', label: 'Analytics' },
+        ]}
+      />
 
       {activeTab === 'team' && (
         <div style={{ animation: 'slideUp 0.2s ease' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 14 }}>
-            {[
-              { label: 'Team members', value: team.length, sub: `${team.filter(m => m.location === 'London').length} London / ${team.filter(m => m.location === 'New York').length} NY / ${team.filter(m => m.location === 'Dubai').length} Dubai`, color: '#7c3aed', bg: '#f5f3ff' },
-              { label: 'Available today', value: presentCount + wfhCount, sub: `${presentCount} office, ${wfhCount} WFH`, color: '#059669', bg: '#ecfdf5' },
-              { label: 'Absent today', value: absentCount, sub: absentCount ? 'Listed below' : 'No reported absences', color: '#dc2626', bg: '#fff1f2' },
-              { label: 'Critical covered', value: `${availableCritical}/${criticalMembers.length}`, sub: criticalUnavailable.length ? `${criticalUnavailable.length} critical unavailable` : 'All critical roles covered', color: criticalUnavailable.length ? '#d97706' : '#059669', bg: criticalUnavailable.length ? '#fffbeb' : '#ecfdf5' },
-            ].map(item => (
-              <div key={item.label} style={{ ...card, padding: '14px 16px', background: item.bg, border: `1px solid ${item.color}22` }}>
-                <div style={{ fontSize: 26, fontWeight: 900, color: item.color, lineHeight: 1 }}>{item.value}</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: '#1e1b4b', marginTop: 7 }}>{item.label}</div>
-                <div style={{ fontSize: 10, color: '#6b7280', marginTop: 3 }}>{item.sub}</div>
-              </div>
-            ))}
+            <StatCard
+              label="Team Members"
+              value={team.length}
+              sub={`${team.filter(m => m.location === 'London').length} London / ${team.filter(m => m.location === 'New York').length} NY / ${team.filter(m => m.location === 'Dubai').length} Dubai`}
+              color="#7c3aed" bg="#f5f3ff"
+            />
+            <StatCard
+              label="Available Today"
+              value={presentCount + wfhCount}
+              sub={`${presentCount} office, ${wfhCount} WFH`}
+              color="#059669" bg="#ecfdf5"
+            />
+            <StatCard
+              label="Absent Today"
+              value={absentCount}
+              sub={absentCount ? 'Listed below' : 'No reported absences'}
+              color="#dc2626" bg="#fff1f2"
+            />
+            <StatCard
+              label="Critical Covered"
+              value={`${availableCritical}/${criticalMembers.length}`}
+              sub={criticalUnavailable.length ? `${criticalUnavailable.length} critical unavailable` : 'All critical roles covered'}
+              color={criticalUnavailable.length ? '#d97706' : '#059669'}
+              bg={criticalUnavailable.length ? '#fffbeb' : '#ecfdf5'}
+            />
           </div>
 
           {openIssues > 0 && (
@@ -249,10 +217,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
               </div>
 
               {unavailableMembers.length === 0 ? (
-                <div style={{ padding: '18px 14px', borderRadius: 12, background: '#ecfdf5', border: '1px solid #bbf7d0', textAlign: 'center' }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>No absences today</div>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>The team is covered.</div>
-                </div>
+                <EmptyState title="No absences today" message="The team is fully covered." />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                   {unavailableMembers.map(member => (

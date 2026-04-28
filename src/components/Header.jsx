@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { USERS, avatarColor } from '../data';
+import { USERS } from '../data';
+import { Avatar } from './shared';
 
 const USER_LIST = [
   { id: 'hr',       label: 'Alex',    sublabel: 'HR Manager',  initials: 'A' },
@@ -13,19 +14,6 @@ const TYPE_COLORS = {
   success: { bg: '#f0fdf4', text: '#059669', dot: '#10b981' },
   error:   { bg: '#fff1f2', text: '#dc2626', dot: '#ef4444' },
 };
-
-function Avatar({ initials, size = 32, bg }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: bg || avatarColor(initials),
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: 'white', fontWeight: 700, fontSize: size * 0.36, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
 
 function timeAgo(date) {
   const secs = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -192,15 +180,48 @@ export default function Header({ user, currentUser, setCurrentUser, notification
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 8 }}>
                   Help Centre
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
                   {[
-                    { title: 'HR overview', text: 'Shows readiness, live staffing status, active risks, department coverage, escalations, and staff announcements.' },
-                    { title: 'Team lead view', text: 'Shows today’s absences, critical-role coverage, the weekly location schedule, and team-level analytics.' },
-                    { title: 'Employee view', text: 'Lets staff report absence or WFH, view announcements, check their desk area, and review absence history.' },
-                  ].map(item => (
-                    <div key={item.title} style={{ paddingBottom: 9, borderBottom: '1px solid #f3f4f6' }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#7c3aed' }}>{item.title}</div>
-                      <div style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.45, marginTop: 2 }}>{item.text}</div>
+                    {
+                      title: 'HR Manager',
+                      items: [
+                        'Overview tab — live KPIs, readiness score, risk management, and department coverage.',
+                        'Click "Deploy Reserve" on any department below minimum staffing to assign staff.',
+                        'Use the Alert Staff panel to push announcements to all employees.',
+                        'Analyse tab — filter by department or period, view absence trends and the world map.',
+                        'Reports tab — configure and download workforce reports for leadership.',
+                        'Escalations from team leads appear in the Overview tab for review.',
+                      ],
+                    },
+                    {
+                      title: 'Team Lead',
+                      items: [
+                        'My Team tab — see today\’s absences, critical-role coverage, and the weekly schedule.',
+                        'Click "Escalate to HR" when absence levels exceed thresholds or critical roles are uncovered.',
+                        'Analytics tab — track absence rate vs threshold, compare with other teams, and view trends.',
+                        'The weekly schedule grid shows each team member\’s office, WFH, leave, or absence plan.',
+                        'Filter the schedule by location (London, New York, Dubai).',
+                      ],
+                    },
+                    {
+                      title: 'Employee',
+                      items: [
+                        'Today tab — report an absence or log a WFH day using the form on the right.',
+                        'Select a reason and estimated duration; your manager is notified automatically.',
+                        'Dismiss announcements from HR using the × button.',
+                        'Use the desk map to see floor occupancy and book a desk for tomorrow.',
+                        'My Record tab — view Bradford factor, absence allowance, and full absence history.',
+                        'Withdraw a past absence record using the Withdraw button in the history table.',
+                      ],
+                    },
+                  ].map(role => (
+                    <div key={role.title} style={{ paddingBottom: 8, borderBottom: '1px solid #f3f4f6' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#7c3aed', marginBottom: 4 }}>{role.title}</div>
+                      <ul style={{ margin: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {role.items.map(item => (
+                          <li key={item} style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.45 }}>{item}</li>
+                        ))}
+                      </ul>
                     </div>
                   ))}
                 </div>
@@ -218,11 +239,6 @@ export default function Header({ user, currentUser, setCurrentUser, notification
               </div>
             )}
           </div>
-          <a href="#" onClick={e => e.preventDefault()}
-            style={{ color: '#6b7280', fontSize: 13, fontWeight: 500, textDecoration: 'none' }}>
-            portal
-          </a>
-
           {/* Notification bell */}
           <div ref={bellRef} style={{ position: 'relative' }}>
             <button

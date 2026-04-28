@@ -6,16 +6,8 @@ import {
 } from 'recharts';
 import WorldMap from './WorldMap';
 import SiteStatusStrip from './SiteStatusStrip';
+import { card, TabBar, StatCard, PageHeader, StatusBadge, EmptyState, LastUpdated } from './shared';
 import { HR_DATA } from '../data';
-
-const card = {
-  background: 'rgba(255,255,255,0.88)',
-  backdropFilter: 'blur(10px)',
-  borderRadius: 16,
-  boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-  border: '1px solid rgba(255,255,255,0.9)',
-  padding: 18,
-};
 
 const PIE_COLORS = {
   inOffice: '#6366f1',
@@ -47,21 +39,6 @@ const RISK_ORDER = {
   Monitor: 2,
   Stable: 3,
 };
-
-function StatusBadge({ status }) {
-  const colors = {
-    Stable:   { bg: '#d1fae5', text: '#065f46' },
-    Warning:  { bg: '#fef3c7', text: '#92400e' },
-    Critical: { bg: '#fee2e2', text: '#991b1b' },
-    Monitor:  { bg: '#dbeafe', text: '#1e40af' },
-  };
-  const c = colors[status] || colors.Monitor;
-  return (
-    <span style={{ background: c.bg, color: c.text, fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20 }}>
-      {status}
-    </span>
-  );
-}
 
 function getCoverageStatus(current, min) {
   if (current < min) return { level: 'Critical', color: '#dc2626', bg: '#fff1f2' };
@@ -178,38 +155,6 @@ function OrgSnapshotTable({ data }) {
   );
 }
 
-function TabBar({ active, onChange, criticalAlerts }) {
-  const tabs = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'analyse',  label: 'Analyse'  },
-    { key: 'reports',  label: 'Reports'  },
-  ];
-  return (
-    <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 14, padding: 4, marginBottom: 24, width: 'fit-content' }}>
-      {tabs.map(t => (
-        <button key={t.key} onClick={() => onChange(t.key)} style={{
-          padding: '9px 26px', borderRadius: 11, border: 'none',
-          background: active === t.key ? 'white' : 'transparent',
-          color: active === t.key ? '#1e1b4b' : '#9ca3af',
-          fontFamily: 'inherit', fontWeight: active === t.key ? 700 : 500,
-          fontSize: 13, cursor: 'pointer',
-          boxShadow: active === t.key ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-          transition: 'all 0.15s', position: 'relative',
-          display: 'flex', alignItems: 'center', gap: 7,
-        }}>
-          {t.label}
-          {t.key === 'overview' && criticalAlerts > 0 && (
-            <span style={{
-              background: '#dc2626', color: 'white', fontSize: 9, fontWeight: 800,
-              padding: '1px 5px', borderRadius: 20, lineHeight: 1.5,
-            }}>{criticalAlerts}</span>
-          )}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export default function HRDashboard({ user, showToast, employeeAbsent, employeeWFH, pushStaffAnnouncement, addNotification, escalations = [], resolveEscalation }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [filterDept, setFilterDept]   = useState('All');
@@ -320,15 +265,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-          Good morning, {user.name}
-        </h1>
-      </div>
+      <PageHeader name={user.name} subtitle="HR Manager Dashboard" />
 
       {/* Live absence alert — always visible */}
       {employeeAbsent && (
@@ -345,8 +282,15 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
 
       {/* Readiness banner — always visible */}
 
-      {/* Tab bar */}
-      <TabBar active={activeTab} onChange={setActiveTab} criticalAlerts={criticalAlerts} />
+      <TabBar
+        active={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          { key: 'overview', label: 'Overview', badge: criticalAlerts },
+          { key: 'analyse',  label: 'Analyse' },
+          { key: 'reports',  label: 'Reports' },
+        ]}
+      />
 
       {/* ── TAB: OVERVIEW ─────────────────────────────────────────────── */}
       {activeTab === 'overview' && (
@@ -410,18 +354,17 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
           )}
 
           {/* KPI strip */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+            <LastUpdated />
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 18 }}>
             {kpis.map(k => (
-              <div key={k.label} style={{ ...card, padding: '18px 20px', borderLeft: `3px solid ${k.color}` }}>
-                <div style={{ fontSize: 32, fontWeight: 900, color: k.color, lineHeight: 1, letterSpacing: '-1px' }}>{k.value}</div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#1e1b4b', marginTop: 6 }}>{k.label}</div>
-                <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{k.sub}</div>
-              </div>
+              <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} />
             ))}
           </div>
 
           {/* Live status + Risks side by side */}
-          <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr 280px', gap: 14, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px, 1fr) 2fr minmax(260px, 1.3fr)', gap: 14, alignItems: 'start' }}>
             {/* Left col: Readiness Gauge + Live Status pie */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {/* Readiness Score Gauge */}
@@ -558,14 +501,10 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {riskSummary.length === 0 ? (
-                  <div style={{
-                    padding: '18px 14px', borderRadius: 12,
-                    background: '#f0fdf4', border: '1px solid #bbf7d0',
-                    textAlign: 'center',
-                  }}>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: '#059669' }}>No active risks</div>
-                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>Coverage and site status are within thresholds.</div>
-                  </div>
+                  <EmptyState
+                    title="No active risks"
+                    message="Coverage and site status are within thresholds."
+                  />
                 ) : (
                   riskSummary.map(r => (
                     <div key={r.id} style={{
@@ -1042,10 +981,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {kpis.map(k => (
-                    <div key={k.label} style={{ padding: '10px 12px', background: '#fafafa', borderRadius: 10, borderLeft: `3px solid ${k.color}` }}>
-                      <div style={{ fontSize: 20, fontWeight: 800, color: k.color, lineHeight: 1 }}>{k.value}</div>
-                      <div style={{ fontSize: 10, color: '#6b7280', marginTop: 3 }}>{k.label}</div>
-                    </div>
+                    <StatCard key={k.label} label={k.label} value={k.value} color={k.color} />
                   ))}
                 </div>
               </div>

@@ -3,16 +3,8 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import DeskMap from './DeskMap';
-import { EMPLOYEE_DATA, HR_DATA, SITE_STATUS_COLORS, avatarColor } from '../data';
-
-const card = {
-  background: 'rgba(255,255,255,0.88)',
-  backdropFilter: 'blur(10px)',
-  borderRadius: 16,
-  boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-  border: '1px solid rgba(255,255,255,0.9)',
-  padding: 18,
-};
+import { card, Avatar, TabBar, PageHeader } from './shared';
+import { EMPLOYEE_DATA, HR_DATA, SITE_STATUS_COLORS } from '../data';
 
 const ANNOUNCEMENT_STYLES = {
   alert:   { bg: '#fff1f2', border: '#fecdd3', iconBg: '#fee2e2' },
@@ -29,41 +21,6 @@ const MY_STATS = {
   bradfordThreshold: 150,
   lastAbsence: '12/02/2025',
 };
-
-function Avatar({ initials, size = 34 }) {
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: avatarColor(initials), color: 'white',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.33, fontWeight: 700, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
-
-function TabBar({ active, onChange }) {
-  const tabs = [
-    { key: 'today',  label: 'Today'     },
-    { key: 'record', label: 'My Record' },
-  ];
-  return (
-    <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 14, padding: 4, marginBottom: 24, width: 'fit-content' }}>
-      {tabs.map(t => (
-        <button key={t.key} onClick={() => onChange(t.key)} style={{
-          padding: '9px 26px', borderRadius: 11, border: 'none',
-          background: active === t.key ? 'white' : 'transparent',
-          color: active === t.key ? '#1e1b4b' : '#9ca3af',
-          fontFamily: 'inherit', fontWeight: active === t.key ? 700 : 500,
-          fontSize: 13, cursor: 'pointer',
-          boxShadow: active === t.key ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-          transition: 'all 0.15s',
-        }}>{t.label}</button>
-      ))}
-    </div>
-  );
-}
 
 export default function EmployeeDashboard({ user, showToast, absences, onAbsenceSubmit, onCancelAbsence, onWFHSubmit, isAbsent, isWFH, staffAnnouncements = [] }) {
   const { announcements: initialAnnouncements, myTeam, escalationContacts, absenceReasons, absenceDurations, monthlyAbsence, deskBooking } = EMPLOYEE_DATA;
@@ -112,17 +69,16 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      {/* Page header */}
-      <div style={{ marginBottom: 20 }}>
-        <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
-          {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-          Good morning, {user.name}
-        </h1>
-      </div>
+      <PageHeader name={user.name} subtitle="Employee Dashboard" />
 
-      <TabBar active={activeTab} onChange={setActiveTab} />
+      <TabBar
+        active={activeTab}
+        onChange={setActiveTab}
+        tabs={[
+          { key: 'today',  label: 'Today' },
+          { key: 'record', label: 'My Record' },
+        ]}
+      />
 
       {/* ── TAB: TODAY ────────────────────────────────────────────────── */}
       {activeTab === 'today' && (

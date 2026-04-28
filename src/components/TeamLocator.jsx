@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { card, Avatar } from './shared';
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 const STATUS_META = {
@@ -13,24 +14,6 @@ const CRITICALITY_META = {
   critical: { label: 'Critical', color: '#d97706', bg: '#fffbeb' },
   standard: { label: 'Standard', color: '#059669', bg: '#f0fdf4' },
 };
-
-function Avatar({ initials, size = 28 }) {
-  const colors = [
-    '#7c3aed', '#db2777', '#0891b2', '#059669',
-    '#d97706', '#dc2626', '#2563eb', '#7c3aed',
-  ];
-  const colorIndex = initials.charCodeAt(0) % colors.length;
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: colors[colorIndex], color: 'white',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.35, fontWeight: 700, flexShrink: 0,
-    }}>
-      {initials}
-    </div>
-  );
-}
 
 function StatusPill({ label, color, bg }) {
   return (
@@ -73,15 +56,6 @@ export default function TeamLocator({ team = [] }) {
       wfh: members.filter(member => member.status === 'wfh').length,
     };
   });
-
-  const card = {
-    background: 'rgba(255,255,255,0.88)',
-    backdropFilter: 'blur(10px)',
-    borderRadius: 16,
-    boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-    border: '1px solid rgba(255,255,255,0.9)',
-    padding: 18,
-  };
 
   return (
     <div style={card}>
