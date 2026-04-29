@@ -6,6 +6,8 @@ import EmployeeDashboard from './components/EmployeeDashboard';
 import Toast from './components/Toast';
 import { USERS, EMPLOYEE_DATA } from './data';
 
+// State is lifted to App so that actions by one role (e.g. an employee reporting
+// absence) are immediately visible in other roles' dashboards without a data fetch.
 export default function App() {
   const [currentUser, setCurrentUser] = useState('hr');
   const [toast, setToast] = useState(null);
@@ -24,11 +26,14 @@ export default function App() {
   // Announcements pushed by HR that appear in Employee's feed
   const [staffAnnouncements, setStaffAnnouncements] = useState([]);
 
+  // Shows a brief feedback message after user actions; auto-dismisses after 4s.
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
+  // Routes a notification to a specific role's inbox, enabling cross-role alerts
+  // (e.g. absence submission automatically notifying the team lead).
   const addNotification = useCallback((recipient, message, type = 'info') => {
     setNotificationsByUser(prev => ({
       ...prev,
@@ -46,6 +51,8 @@ export default function App() {
     }));
   }, [currentUser]);
 
+  // Creates a formal escalation from the team lead to HR, visible in the HR
+  // dashboard until resolved.
   const createEscalation = useCallback(({ targetName, notes, absencePct }) => {
     const escalation = {
       id: Date.now(),
@@ -67,6 +74,7 @@ export default function App() {
     return escalation;
   }, [addNotification]);
 
+  // Marks an escalation as resolved and notifies the team lead of the outcome.
   const resolveEscalation = useCallback((id) => {
     setEscalations(prev => prev.map(e => (
       e.id === id ? { ...e, status: 'resolved', resolvedAt: new Date() } : e
@@ -74,6 +82,7 @@ export default function App() {
     addNotification('teamlead', 'HR resolved your escalation', 'success');
   }, [addNotification]);
 
+  // Lets HR broadcast an announcement that appears in every employee's feed.
   const pushStaffAnnouncement = useCallback((text, type = 'info', icon = '📢') => {
     setStaffAnnouncements(prev => [
       { id: Date.now(), type, icon, text },
@@ -81,6 +90,7 @@ export default function App() {
     ]);
   }, []);
 
+  // Records the employee's absence and notifies the team lead in real time.
   const handleAbsenceSubmit = useCallback(({ reason, duration, date }) => {
     setEmployeeAbsences(prev => [{ date, duration, reason }, ...prev]);
     setEmployeeAbsent(true);
@@ -88,12 +98,14 @@ export default function App() {
     addNotification('teamlead', `Simone reported absent (${reason})`, 'warning');
   }, [addNotification]);
 
+  // Removes an absence record and notifies the team lead that it was withdrawn.
   const handleCancelAbsence = useCallback((index) => {
     setEmployeeAbsences(prev => prev.filter((_, i) => i !== index));
     if (index === 0) setEmployeeAbsent(false);
     addNotification('teamlead', 'Simone cancelled an absence report', 'info');
   }, [addNotification]);
 
+  // Logs the employee as working from home and updates the team lead's view.
   const handleWFHSubmit = useCallback(() => {
     setEmployeeWFH(true);
     setEmployeeAbsent(false);

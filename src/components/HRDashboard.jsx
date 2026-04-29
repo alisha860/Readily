@@ -40,6 +40,8 @@ const RISK_ORDER = {
   Stable: 3,
 };
 
+// Classifies a department's staffing level. A Warning fires within 5 of the
+// minimum so HR can act before a breach actually occurs.
 function getCoverageStatus(current, min) {
   if (current < min) return { level: 'Critical', color: '#dc2626', bg: '#fff1f2' };
   if (current <= min + 5) return { level: 'Warning', color: '#d97706', bg: '#fffbeb' };
@@ -53,6 +55,9 @@ function getDeptAbsenceRate(deptName, snapshot) {
   return Math.round((dept.absent / total) * 100);
 }
 
+// Combines department coverage shortfalls and site disruptions into one
+// prioritised risk list, sorted Critical first so HR sees the most urgent
+// issues at the top without having to scan multiple panels.
 function buildRiskSummary(deptCoverage, snapshot, sites) {
   const deptRisks = deptCoverage.flatMap(dept => {
     const coverage = getCoverageStatus(dept.current, dept.min);
@@ -183,6 +188,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
   const activeTrend       = absenceTrendsByPeriod[filterPeriod];
   const drillDept         = filterDept !== 'All' ? orgAbsenceSnapshot.find(d => d.dept === filterDept) : null;
 
+  // Reflects the employee's self-reported status in the HR totals in real time.
   const liveAbsent  = staffStatus.absent + (employeeAbsent ? 1 : 0);
   const liveWFH     = staffStatus.wfh    + (employeeWFH    ? 1 : 0);
 
@@ -204,11 +210,15 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
 
   const unresolvedCritical = riskSummary.find(r => r.level === 'Critical');
   const unresolvedWarning  = riskSummary.some(r => r.level === 'Warning');
+  // Overall readiness status shown in the gauge. Absence rate thresholds are
+  // combined with risk level so HR gets a single at-a-glance indicator.
   const readiness = unresolvedCritical || absenceRate > 15 ? 'RED'
     : unresolvedWarning || absenceRate > 10 ? 'AMBER'
     : 'GREEN';
   const warningAlerts = riskSummary.filter(r => r.level === 'Warning').length;
   const openEscalations = escalations.filter(e => e.status === 'open');
+  // Score starts at 100 and is penalised by critical risks, warnings, and
+  // absence above the 8% baseline, giving HR a numeric measure of readiness.
   const readinessScore = Math.max(0, Math.min(100,
     100 - criticalAlerts * 20 - warningAlerts * 8 - Math.max(0, (absenceRate - 8) * 2)
   ));
@@ -253,6 +263,8 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
     }}>{label}</button>
   );
 
+  // Simulates report generation with a short delay to reflect a real export
+  // process, then confirms success to the user via a toast notification.
   const handleGenerate = () => {
     setReportLoading(true);
     setTimeout(() => {

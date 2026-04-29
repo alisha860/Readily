@@ -15,6 +15,8 @@ const TYPE_COLORS = {
   error:   { bg: '#fff1f2', text: '#dc2626', dot: '#ef4444' },
 };
 
+// Formats notification timestamps as relative time (e.g. "3m ago") so users
+// can quickly judge how recent each alert is.
 function timeAgo(date) {
   const secs = Math.floor((Date.now() - date.getTime()) / 1000);
   if (secs < 60) return 'just now';
@@ -31,6 +33,8 @@ export default function Header({ user, currentUser, setCurrentUser, notification
   const bellRef = useRef(null);
   const helpRef = useRef(null);
 
+  // Closes any open dropdown when the user clicks elsewhere on the page,
+  // preventing multiple panels from being open simultaneously.
   useEffect(() => {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -41,9 +45,13 @@ export default function Header({ user, currentUser, setCurrentUser, notification
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // Unread count drives the red badge on the bell icon so users immediately
+  // know when new notifications have arrived without opening the panel.
   const unread = notifications.filter(n => !n.read).length;
   const currentEntry = USER_LIST.find(u => u.id === currentUser);
 
+  // Marks all notifications as read when the bell is opened, clearing the
+  // unread badge so the user knows they have seen the latest alerts.
   function handleBellOpen() {
     setBellOpen(o => !o);
     if (!bellOpen && unread > 0) markNotificationsRead?.();

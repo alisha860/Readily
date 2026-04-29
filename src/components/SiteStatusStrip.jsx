@@ -7,6 +7,8 @@ const STATUS_LABELS = {
   closed:  'Closed',
 };
 
+// Ordered so clicking a site badge cycles Open -> Partial -> Reduced -> Closed
+// and wraps back to Open, giving HR a single-click way to update site status.
 const STATUS_CYCLE = ['open', 'partial', 'reduced', 'closed'];
 
 export default function SiteStatusStrip({ sites = [], onViewMap, onStatusChange }) {

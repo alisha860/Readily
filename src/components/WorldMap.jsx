@@ -11,6 +11,9 @@ const STATUS_LABELS = {
   closed: 'Closed',
 };
 
+// Interactive world map showing each office site's operational status. When
+// siteStats are provided (Team Lead view), hovering a marker shows team
+// availability figures for that location.
 export default function WorldMap({ sites = [], title = 'Site Locations', siteStats = {} }) {
   const [hoveredSite, setHoveredSite] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });

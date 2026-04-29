@@ -13,6 +13,9 @@ const ANNOUNCEMENT_STYLES = {
   success: { bg: '#f0fdf4', border: '#bbf7d0', iconBg: '#dcfce7' },
 };
 
+// Personal absence metrics shown in the My Record tab. The Bradford Factor
+// penalises frequent short absences more than single long ones; a score above
+// 150 triggers a formal HR review.
 const MY_STATS = {
   daysAbsentYear: 37,
   allowanceTotal: 50,
@@ -35,12 +38,15 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
   const [dismissed, setDismissed]     = useState(new Set());
   const [localAnnouncements, setLocalAnnouncements] = useState(initialAnnouncements);
 
-  // Merge HR-pushed announcements with local ones; filter dismissed
+  // HR-pushed announcements are prepended so they appear above local ones,
+  // and dismissed entries are filtered out to keep the feed uncluttered.
   const announcements = [...staffAnnouncements, ...localAnnouncements]
     .filter(a => !dismissed.has(a.id));
 
   const dismissAnnouncement = id => setDismissed(prev => new Set([...prev, id]));
 
+  // Validates that both fields are filled before submitting, preventing
+  // incomplete absence records from being sent to the team lead.
   const handleSubmit = () => {
     if (!reason || !duration) { showToast('Please select a reason and duration.', 'warning'); return; }
     const today = new Date().toLocaleDateString('en-GB');
@@ -54,6 +60,8 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
     setReason(''); setDuration(''); setHandover('');
   };
 
+  // Logs the employee as WFH without creating an absence record, keeping their
+  // record accurate and notifying the team of their remote status.
   const handleWFH = () => {
     onWFHSubmit();
     setLocalAnnouncements(prev => [{

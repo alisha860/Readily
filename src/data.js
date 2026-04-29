@@ -1,3 +1,7 @@
+// Three user personas let the application demonstrate the full workflow:
+// HR manages the organisation, the Team Lead monitors their team, and the
+// Employee reports their own absence. Switching between them simulates
+// how each role interacts with the same live data.
 export const USERS = {
   hr: {
     id: 'hr',
@@ -25,6 +29,9 @@ export const USERS = {
   },
 };
 
+// Centralised configuration for absence management. Grouping reasons by category
+// (health, disruption, standard) lets the UI apply appropriate urgency styling
+// and allows HR to filter and prioritise responses accordingly.
 export const DISRUPTION_CONFIG = {
   absenceReasons: [
     { key: 'confirmed_positive', label: 'Confirmed Positive', category: 'health', color: '#dc2626' },
@@ -45,6 +52,8 @@ export const DISRUPTION_CONFIG = {
     recovered: { label: 'Recovered', color: '#8b5cf6', icon: '✓' },
   },
 
+  // Minimum staffing thresholds per criticality level. Higher-criticality roles
+  // require greater coverage so the system can alert HR before shortfalls occur.
   roleCriticality: {
     essential: { label: 'Essential (Minimum 90%)', threshold: 90, color: '#dc2626' },
     critical: { label: 'Critical (Minimum 70%)', threshold: 70, color: '#f59e0b' },
@@ -68,6 +77,7 @@ export const DISRUPTION_CONFIG = {
   ],
 };
 
+// Figures represent the current organisational snapshot that HR sees on login.
 export const HR_DATA = {
   staffStatus: {
     available: 80,
@@ -154,6 +164,9 @@ export const HR_DATA = {
   ],
 };
 
+// Team data used by the Team Lead dashboard. Each member has a status, location,
+// criticality, and weekly schedule so the lead can see at a glance who is in,
+// working remotely, or absent across all office locations.
 export const TEAM_LEAD_DATA = {
   team: [
     { id: 1, name: 'Georgia Knight', status: 'available', initials: 'GK', daysAbsent: null, location: 'London', desk: 'L-A1', role: 'FCA Sign-off Lead', criticality: 'essential', healthStatus: 'healthy', schedule: { Mon: 'office', Tue: 'office', Wed: 'wfh', Thu: 'office', Fri: 'office' } },
@@ -219,6 +232,8 @@ export const TEAM_LEAD_DATA = {
   },
 };
 
+// Data scoped to the employee's own view: their announcements, team status,
+// absence history, desk layout, and escalation contacts for when they need help.
 export const EMPLOYEE_DATA = {
   announcements: [
     { id: 1, type: 'alert', icon: '🏢', text: 'CQ-HQ — Your site is closed.' },
@@ -315,6 +330,8 @@ export const AVATAR_COLORS = [
   '#d97706', '#dc2626', '#2563eb', '#7c3aed',
 ];
 
+// Deterministic hash ensures the same initials always resolve to the same colour,
+// so avatars remain visually consistent across re-renders and role switches.
 export function avatarColor(str) {
   const hash = [...str].reduce((a, c) => a + c.charCodeAt(0), 0);
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];

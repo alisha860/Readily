@@ -14,6 +14,8 @@ const STATUS_CONFIG = {
   wfh:       { dot: '#6366f1', label: 'WFH', labelColor: '#4f46e5' },
 };
 
+// Modal that lets the team lead formally escalate an absence situation to HR,
+// with optional notes to provide context before submitting.
 function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   const [notes, setNotes] = useState('');
   return (
@@ -66,6 +68,8 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
   const [escalation, setEscalation] = useState(null);
   const { team: baseTeam, comparisonData, sites, wfhVsAbsentTrend, siteAvailability } = TEAM_LEAD_DATA;
 
+  // Live-patches the employee's entry so the team lead immediately sees any
+  // status change submitted by the employee without needing a page refresh.
   const team = baseTeam.map(m => {
     if (m.isEmployee) {
       const liveScheduleStatus = employeeAbsent ? 'absent' : employeeWFH ? 'wfh' : 'office';
@@ -89,6 +93,8 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
   const absentPct    = Math.round(absentCount / team.length * 100);
   const wfhPct       = Math.round(wfhCount    / team.length * 100);
   const inPct        = 100 - absentPct - wfhPct;
+  // Absence thresholds that drive the colour-coded meter in the Analytics tab,
+  // visually showing the team lead how close the team is to a critical level.
   const threshold = { green: 15, amber: 25, max: 40 };
   const greenEnd  = (threshold.green / threshold.max) * 100;
   const amberEnd  = (threshold.amber / threshold.max) * 100;
@@ -104,6 +110,8 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
 
   const comparisonColors = ['#7c3aed', '#a5b4fc', '#c4b5fd'];
   const unavailableMembers = team.filter(m => m.status === 'absent');
+  // Tracks essential and critical roles separately so the team lead can see at
+  // a glance whether any high-priority positions are currently uncovered.
   const criticalMembers = team.filter(m => m.criticality === 'essential' || m.criticality === 'critical');
   const criticalUnavailable = criticalMembers.filter(m => m.status === 'absent');
   const availableCritical = criticalMembers.length - criticalUnavailable.length;

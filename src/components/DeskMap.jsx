@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
 
+// Visual styling per desk state so employees can read floor occupancy at a
+// glance and identify available desks to book for the following day.
 const DESK_CONFIG = {
   available: { bg: '#f0fdf4', border: '#86efac', textColor: '#15803d', label: 'Available' },
   occupied:  { bg: '#f9fafb', border: '#d1d5db', textColor: '#6b7280', label: 'Occupied'  },
@@ -30,6 +32,8 @@ export default function DeskMap({ booking, isWFH = false, showToast }) {
     setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
   };
 
+  // Only available desks are clickable; clicking the already-selected desk
+  // deselects it, allowing the employee to change their choice before confirming.
   const handleDeskClick = desk => {
     if (desk.status !== 'available' && desk.id !== bookedDeskId) return;
     if (confirmed) return;
@@ -148,6 +152,8 @@ export default function DeskMap({ booking, isWFH = false, showToast }) {
                 const isBooked   = desk.id === bookedDeskId && !confirmed;
                 const isAvailable = desk.status === 'available' && !confirmed;
 
+                // Override display status for WFH and pending bookings without
+                // mutating the underlying data.
                 let effectiveStatus = desk.status;
                 if (isMyDesk && isWFH) effectiveStatus = 'wfh';
                 if (isBooked) effectiveStatus = 'booked';

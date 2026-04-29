@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { avatarColor } from '../data';
 
-// ─── Card style ───────────────────────────────────────────────────────────────
+// Shared surface style applied to every panel, giving the dashboard a
+// consistent frosted-glass appearance across all three user roles.
 export const card = {
   background: 'rgba(255,255,255,0.88)',
   backdropFilter: 'blur(10px)',
@@ -11,7 +12,7 @@ export const card = {
   padding: 18,
 };
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
+// Circular avatar using initials to visually identify each team member.
 export function Avatar({ initials, size = 32, bg }) {
   return (
     <div style={{
@@ -25,8 +26,8 @@ export function Avatar({ initials, size = 32, bg }) {
   );
 }
 
-// ─── TabBar ───────────────────────────────────────────────────────────────────
-// tabs: [{ key, label, badge? }]  — badge shows a red count dot when > 0
+// Navigation strip for switching dashboard sections. A red badge on a tab
+// alerts the user that items in that section need attention.
 export function TabBar({ active, onChange, tabs }) {
   return (
     <div style={{
@@ -60,10 +61,8 @@ export function TabBar({ active, onChange, tabs }) {
   );
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
-// Two variants:
-//   accent-border (HR KPIs): no bg prop → white card with left colour accent
-//   tinted (Team Lead KPIs): pass bg → coloured background, no accent border
+// Displays a single KPI figure. Two visual variants: a tinted card (Team Lead)
+// and an accent-border card (HR), so each role's metrics feel distinct.
 export function StatCard({ label, value, sub, color, bg }) {
   if (bg) {
     return (
@@ -96,7 +95,8 @@ export function StatCard({ label, value, sub, color, bg }) {
   );
 }
 
-// ─── PageHeader ───────────────────────────────────────────────────────────────
+// Greets the current user by name and shows today's date, orienting them on
+// which dashboard they are viewing.
 export function PageHeader({ name, subtitle }) {
   return (
     <div style={{ marginBottom: 20 }}>
@@ -117,7 +117,6 @@ export function PageHeader({ name, subtitle }) {
   );
 }
 
-// ─── StatusBadge ──────────────────────────────────────────────────────────────
 // RAG label badge — always shows text, not colour alone (accessibility)
 export function StatusBadge({ status }) {
   const styles = {
@@ -137,7 +136,6 @@ export function StatusBadge({ status }) {
   );
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────────────────
 export function EmptyState({ title, message, color = '#059669', bg = '#f0fdf4', border = '#bbf7d0' }) {
   return (
     <div style={{
@@ -151,7 +149,6 @@ export function EmptyState({ title, message, color = '#059669', bg = '#f0fdf4', 
   );
 }
 
-// ─── DashboardSection ─────────────────────────────────────────────────────────
 // A card wrapper with a consistent header row and optional collapsible toggle.
 export function DashboardSection({ title, subtitle, action, collapsible = false, defaultOpen = true, children, style }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -195,7 +192,6 @@ export function DashboardSection({ title, subtitle, action, collapsible = false,
   );
 }
 
-// ─── LastUpdated ──────────────────────────────────────────────────────────────
 export function LastUpdated() {
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (
