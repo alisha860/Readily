@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
+import { useAccessibility } from '../AccessibilityContext';
 import { SITE_STATUS_COLORS } from '../data';
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
@@ -15,6 +16,7 @@ const STATUS_LABELS = {
 // siteStats are provided (Team Lead view), hovering a marker shows team
 // availability figures for that location.
 export default function WorldMap({ sites = [], title = 'Site Locations', siteStats = {} }) {
+  const { palette } = useAccessibility();
   const [hoveredSite, setHoveredSite] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
@@ -135,7 +137,7 @@ export default function WorldMap({ sites = [], title = 'Site Locations', siteSta
                 <span style={{ fontSize: 11, color: '#6b7280' }}>Team available</span>
                 <span style={{
                   fontSize: 15, fontWeight: 800,
-                  color: hoveredSite.stats.pct >= 80 ? '#059669' : hoveredSite.stats.pct >= 65 ? '#d97706' : '#dc2626',
+                  color: hoveredSite.stats.pct >= 80 ? palette.stable : hoveredSite.stats.pct >= 65 ? palette.warning : palette.critical,
                 }}>
                   {hoveredSite.stats.pct}%
                 </span>
@@ -143,7 +145,7 @@ export default function WorldMap({ sites = [], title = 'Site Locations', siteSta
               <div style={{ height: 5, background: '#f3f4f6', borderRadius: 3, overflow: 'hidden', marginBottom: 6 }}>
                 <div style={{
                   width: `${hoveredSite.stats.pct}%`, height: '100%', borderRadius: 3,
-                  background: hoveredSite.stats.pct >= 80 ? '#10b981' : hoveredSite.stats.pct >= 65 ? '#f59e0b' : '#ef4444',
+                  background: hoveredSite.stats.pct >= 80 ? palette.stableLight : hoveredSite.stats.pct >= 65 ? palette.warningLight : palette.criticalLight,
                 }} />
               </div>
               <div style={{ fontSize: 11, color: '#9ca3af' }}>

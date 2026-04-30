@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAccessibility } from '../AccessibilityContext';
 import { avatarColor } from '../data';
 
 // Shared surface style applied to every panel, giving the dashboard a
@@ -117,13 +118,18 @@ export function PageHeader({ name, subtitle }) {
   );
 }
 
-// RAG label badge — always shows text, not colour alone (accessibility)
+// Shape symbols provide a non-colour cue alongside the RAG colour per WCAG 1.4.1.
+const STATUS_SHAPES = { Stable: '●', Warning: '▲', Critical: '■', Monitor: '●' };
+
+// RAG label badge — uses the active palette so the badge colour adapts in
+// colourblind mode. Shape prefix ensures the status is never conveyed by colour alone.
 export function StatusBadge({ status }) {
+  const { palette } = useAccessibility();
   const styles = {
-    Stable:   { bg: '#d1fae5', text: '#065f46' },
-    Warning:  { bg: '#fef3c7', text: '#92400e' },
-    Critical: { bg: '#fee2e2', text: '#991b1b' },
-    Monitor:  { bg: '#dbeafe', text: '#1e40af' },
+    Stable:   { bg: palette.stableBg,   text: palette.stableText   },
+    Warning:  { bg: '#fef3c7',           text: '#92400e'             },
+    Critical: { bg: palette.criticalBg, text: palette.criticalText },
+    Monitor:  { bg: '#dbeafe',           text: '#1e40af'             },
   };
   const s = styles[status] || styles.Monitor;
   return (
@@ -131,7 +137,7 @@ export function StatusBadge({ status }) {
       background: s.bg, color: s.text,
       fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
     }}>
-      {status}
+      {STATUS_SHAPES[status] || '●'} {status}
     </span>
   );
 }

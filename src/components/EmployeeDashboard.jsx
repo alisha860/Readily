@@ -3,15 +3,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import DeskMap from './DeskMap';
+import { useAccessibility } from '../AccessibilityContext';
 import { card, Avatar, TabBar, PageHeader } from './shared';
 import { EMPLOYEE_DATA, HR_DATA, SITE_STATUS_COLORS } from '../data';
-
-const ANNOUNCEMENT_STYLES = {
-  alert:   { bg: '#fff1f2', border: '#fecdd3', iconBg: '#fee2e2' },
-  info:    { bg: '#f0f9ff', border: '#bae6fd', iconBg: '#e0f2fe' },
-  warning: { bg: '#fffbeb', border: '#fde68a', iconBg: '#fef3c7' },
-  success: { bg: '#f0fdf4', border: '#bbf7d0', iconBg: '#dcfce7' },
-};
 
 // Personal absence metrics shown in the My Record tab. The Bradford Factor
 // penalises frequent short absences more than single long ones; a score above
@@ -26,6 +20,17 @@ const MY_STATS = {
 };
 
 export default function EmployeeDashboard({ user, showToast, absences, onAbsenceSubmit, onCancelAbsence, onWFHSubmit, isAbsent, isWFH, staffAnnouncements = [] }) {
+  const { palette } = useAccessibility();
+
+  // Success style adapts to the active palette so the green shade changes in
+  // colourblind mode; alert/info/warning are not RAG colours so they stay fixed.
+  const ANNOUNCEMENT_STYLES = {
+    alert:   { bg: '#fff1f2', border: '#fecdd3', iconBg: '#fee2e2' },
+    info:    { bg: '#f0f9ff', border: '#bae6fd', iconBg: '#e0f2fe' },
+    warning: { bg: '#fffbeb', border: '#fde68a', iconBg: '#fef3c7' },
+    success: { bg: palette.stableBgAlt, border: palette.stableBorder, iconBg: palette.stableBg },
+  };
+
   const { announcements: initialAnnouncements, myTeam, escalationContacts, absenceReasons, absenceDurations, monthlyAbsence, deskBooking } = EMPLOYEE_DATA;
   const mySite = HR_DATA.sites[0];
 
@@ -116,7 +121,7 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
               <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Team</span>
               {myTeam.map(m => (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.status === 'available' ? '#10b981' : '#ef4444' }} />
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.status === 'available' ? palette.stableLight : palette.criticalLight }} />
                   <span style={{ fontSize: 11, color: '#6b7280' }}>{m.name.split(' ')[0]}</span>
                 </div>
               ))}
@@ -465,8 +470,8 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
                     <Avatar initials={m.initials} size={36} />
                     <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: m.status === 'absent' ? '#9ca3af' : '#1e1b4b' }}>{m.name}</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.status === 'available' ? '#10b981' : '#ef4444' }} />
-                      <span style={{ fontSize: 10, fontWeight: 600, color: m.status === 'available' ? '#059669' : '#dc2626' }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.status === 'available' ? palette.stableLight : palette.criticalLight }} />
+                      <span style={{ fontSize: 10, fontWeight: 600, color: m.status === 'available' ? palette.stable : palette.critical }}>
                         {m.status === 'available' ? 'In' : 'Out'}
                       </span>
                     </div>

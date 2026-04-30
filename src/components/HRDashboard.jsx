@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import WorldMap from './WorldMap';
 import SiteStatusStrip from './SiteStatusStrip';
+import { useAccessibility } from '../AccessibilityContext';
 import { card, TabBar, StatCard, PageHeader, StatusBadge, EmptyState, LastUpdated } from './shared';
 import { HR_DATA } from '../data';
 
@@ -42,10 +43,10 @@ const RISK_ORDER = {
 
 // Classifies a department's staffing level. A Warning fires within 5 of the
 // minimum so HR can act before a breach actually occurs.
-function getCoverageStatus(current, min) {
-  if (current < min) return { level: 'Critical', color: '#dc2626', bg: '#fff1f2' };
+function getCoverageStatus(current, min, palette) {
+  if (current < min) return { level: 'Critical', color: palette.critical, bg: palette.criticalBgAlt };
   if (current <= min + 5) return { level: 'Warning', color: '#d97706', bg: '#fffbeb' };
-  return { level: 'Stable', color: '#10b981', bg: '#f0fdf4' };
+  return { level: 'Stable', color: palette.stable, bg: palette.stableBgAlt };
 }
 
 function getDeptAbsenceRate(deptName, snapshot) {
@@ -58,9 +59,9 @@ function getDeptAbsenceRate(deptName, snapshot) {
 // Combines department coverage shortfalls and site disruptions into one
 // prioritised risk list, sorted Critical first so HR sees the most urgent
 // issues at the top without having to scan multiple panels.
-function buildRiskSummary(deptCoverage, snapshot, sites) {
+function buildRiskSummary(deptCoverage, snapshot, sites, palette) {
   const deptRisks = deptCoverage.flatMap(dept => {
-    const coverage = getCoverageStatus(dept.current, dept.min);
+    const coverage = getCoverageStatus(dept.current, dept.min, palette);
     const absenceRate = getDeptAbsenceRate(dept.name, snapshot);
     const risks = [];
     const absenceContext = absenceRate >= 25 ? ` Absence is also high at ${absenceRate}%.` : '';
@@ -108,8 +109,8 @@ function buildRiskSummary(deptCoverage, snapshot, sites) {
       level: site.status === 'closed' ? 'Critical' : 'Warning',
       issue: `${site.name} site status is ${site.status}. Local staffing plans may need adjustment.`,
       source: 'Site operations',
-      color: site.status === 'closed' ? '#dc2626' : '#d97706',
-      bg: site.status === 'closed' ? '#fff1f2' : '#fffbeb',
+      color: site.status === 'closed' ? palette.critical : '#d97706',
+      bg: site.status === 'closed' ? palette.criticalBgAlt : '#fffbeb',
     }));
 
   return [...deptRisks, ...siteRisks].sort((a, b) => (
@@ -117,7 +118,7 @@ function buildRiskSummary(deptCoverage, snapshot, sites) {
   ));
 }
 
-function OrgSnapshotTable({ data }) {
+function OrgSnapshotTable({ data, palette }) {
   return (
     <div style={{ overflowX: 'auto', marginTop: 4 }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
@@ -146,8 +147,8 @@ function OrgSnapshotTable({ data }) {
                 <td style={{ padding: '10px 10px', textAlign: 'right' }}>
                   <span style={{
                     display: 'inline-block', padding: '2px 8px', borderRadius: 12,
-                    background: absRate > 25 ? '#fee2e2' : absRate > 15 ? '#fef3c7' : '#d1fae5',
-                    color: absRate > 25 ? '#991b1b' : absRate > 15 ? '#92400e' : '#065f46',
+                    background: absRate > 25 ? palette.criticalBg : absRate > 15 ? '#fef3c7' : palette.stableBg,
+                    color: absRate > 25 ? palette.criticalText : absRate > 15 ? '#92400e' : palette.stableText,
                     fontWeight: 700, fontSize: 11,
                   }}>{absRate}%</span>
                 </td>
@@ -161,6 +162,7 @@ function OrgSnapshotTable({ data }) {
 }
 
 export default function HRDashboard({ user, showToast, employeeAbsent, employeeWFH, pushStaffAnnouncement, addNotification, escalations = [], resolveEscalation }) {
+  const { palette } = useAccessibility();
   const [activeTab, setActiveTab] = useState('overview');
   const [filterDept, setFilterDept]   = useState('All');
   const [filterPeriod, setFilterPeriod] = useState('week');
@@ -200,10 +202,10 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
   ];
 
   const absenceRate      = Math.round(liveAbsent / staffStatus.total * 1000) / 10;
-  const riskSummary      = buildRiskSummary(deptCoverage, orgAbsenceSnapshot, activeSites);
+  const riskSummary      = buildRiskSummary(deptCoverage, orgAbsenceSnapshot, activeSites, palette);
   const sortedDeptCoverage = [...deptCoverage].sort((a, b) => (
-    (RISK_ORDER[getCoverageStatus(a.current, a.min).level] ?? 99) -
-    (RISK_ORDER[getCoverageStatus(b.current, b.min).level] ?? 99)
+    (RISK_ORDER[getCoverageStatus(a.current, a.min, palette).level] ?? 99) -
+    (RISK_ORDER[getCoverageStatus(b.current, b.min, palette).level] ?? 99)
   ));
   const criticalAlerts   = riskSummary.filter(r => r.level === 'Critical').length;
   const operationalSites = activeSites.filter(s => s.status === 'open' || s.status === 'partial').length;
@@ -381,7 +383,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {/* Readiness Score Gauge */}
               {(() => {
-                const gaugeColor = readiness === 'RED' ? '#dc2626' : readiness === 'AMBER' ? '#d97706' : '#059669';
+                const gaugeColor = readiness === 'RED' ? palette.critical : readiness === 'AMBER' ? palette.warning : palette.stable;
                 const score = Math.round(readinessScore);
                 const gaugeData = [{ value: score }, { value: 100 - score }];
                 return (
@@ -507,7 +509,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                   <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 3 }}>Risk Management</h3>
                   <p style={{ fontSize: 10, color: '#9ca3af' }}>Sorted risks generated from live staffing, absence, and site data</p>
                 </div>
-                <span style={{ fontSize: 20, fontWeight: 900, color: criticalAlerts ? '#dc2626' : warningAlerts ? '#d97706' : '#059669', lineHeight: 1 }}>
+                <span style={{ fontSize: 20, fontWeight: 900, color: criticalAlerts ? palette.critical : warningAlerts ? palette.warning : palette.stable, lineHeight: 1 }}>
                   {riskSummary.length}
                 </span>
               </div>
@@ -551,7 +553,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                   const isActive = filterDept === dept.name;
                   const belowMin = dept.current < dept.min;
                   const isDeploying = deployTarget === dept.name;
-                  const coverageStatus = getCoverageStatus(dept.current, dept.min);
+                  const coverageStatus = getCoverageStatus(dept.current, dept.min, palette);
                   const livePct = Math.round(dept.current / dept.min * 100);
                   return (
                     <div key={dept.name} style={{ borderRadius: 10, border: `1.5px solid ${isActive ? coverageStatus.color : belowMin ? '#fecdd3' : 'transparent'}`, overflow: 'hidden', transition: 'all 0.15s' }}>
@@ -734,7 +736,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                     <div style={{ fontSize: 10, color: '#9ca3af' }}>Absence rate</div>
                     <div style={{
                       fontSize: 20, fontWeight: 900, lineHeight: 1.1,
-                      color: rate > 25 ? '#dc2626' : rate > 15 ? '#d97706' : '#059669',
+                      color: rate > 25 ? palette.critical : rate > 15 ? palette.warning : palette.stable,
                     }}>{rate}%</div>
                   </div>
                 </div>
@@ -768,7 +770,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <OrgSnapshotTable data={filteredSnapshot} />
+              <OrgSnapshotTable data={filteredSnapshot} palette={palette} />
             )}
           </div>
 
@@ -808,10 +810,10 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
                 return (
                   <div style={{
                     marginTop: 12, padding: '10px 14px', borderRadius: 10,
-                    background: up ? '#fff1f2' : '#f0fdf4',
-                    border: `1px solid ${up ? '#fecdd3' : '#bbf7d0'}`,
+                    background: up ? palette.criticalBgAlt : palette.stableBgAlt,
+                    border: `1px solid ${up ? palette.criticalBorder : palette.stableBorder}`,
                   }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: up ? '#dc2626' : '#059669' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: up ? palette.critical : palette.stable }}>
                       {up ? '↑ Trending up' : '↓ Trending down'}
                     </span>
                     <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>

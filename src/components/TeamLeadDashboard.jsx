@@ -5,14 +5,9 @@ import {
 } from 'recharts';
 import WorldMap from './WorldMap';
 import TeamLocator from './TeamLocator';
+import { useAccessibility } from '../AccessibilityContext';
 import { card, Avatar, TabBar, StatCard, PageHeader, EmptyState } from './shared';
 import { TEAM_LEAD_DATA } from '../data';
-
-const STATUS_CONFIG = {
-  available: { dot: '#10b981', label: 'In',  labelColor: '#059669' },
-  absent:    { dot: '#ef4444', label: 'Out', labelColor: '#dc2626' },
-  wfh:       { dot: '#6366f1', label: 'WFH', labelColor: '#4f46e5' },
-};
 
 // Modal that lets the team lead formally escalate an absence situation to HR,
 // with optional notes to provide context before submitting.
@@ -62,6 +57,15 @@ function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
 }
 
 export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, addNotification, createEscalation }) {
+  const { palette } = useAccessibility();
+
+  // Dot and label colours use the active palette so they adapt in colourblind mode.
+  const STATUS_CONFIG = {
+    available: { dot: palette.stableLight,   label: 'In',  labelColor: palette.stable   },
+    absent:    { dot: palette.criticalLight, label: 'Out', labelColor: palette.critical  },
+    wfh:       { dot: '#6366f1',             label: 'WFH', labelColor: '#4f46e5'         },
+  };
+
   const [activeTab, setActiveTab] = useState('team');
   const [showModal, setShowModal] = useState(false);
   const [escalateTarget, setEscalateTarget] = useState(null);
@@ -221,7 +225,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
                   <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 3 }}>Absences</h3>
                   <p style={{ fontSize: 11, color: '#9ca3af' }}>People currently marked as absent</p>
                 </div>
-                <span style={{ fontSize: 22, fontWeight: 900, color: absentCount ? '#dc2626' : '#059669', lineHeight: 1 }}>{absentCount}</span>
+                <span style={{ fontSize: 22, fontWeight: 900, color: absentCount ? palette.critical : palette.stable, lineHeight: 1 }}>{absentCount}</span>
               </div>
 
               {unavailableMembers.length === 0 ? (
@@ -361,11 +365,11 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
                   }} />
                 </div>
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <span style={{ fontSize: 24, fontWeight: 800, color: readiness === 'RED' ? '#dc2626' : readiness === 'AMBER' ? '#f59e0b' : '#10b981' }}>
+                  <span style={{ fontSize: 24, fontWeight: 800, color: readiness === 'RED' ? palette.critical : readiness === 'AMBER' ? palette.warningLight : palette.stable }}>
                     {absentPct}%
                   </span>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                    Current rate — <strong style={{ color: readiness === 'RED' ? '#dc2626' : readiness === 'AMBER' ? '#f59e0b' : '#10b981' }}>
+                    Current rate — <strong style={{ color: readiness === 'RED' ? palette.critical : readiness === 'AMBER' ? palette.warningLight : palette.stable }}>
                       {readiness === 'RED' ? 'Red' : readiness === 'AMBER' ? 'Amber' : 'Green'}
                     </strong>
                   </div>

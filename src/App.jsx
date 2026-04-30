@@ -4,6 +4,8 @@ import HRDashboard from './components/HRDashboard';
 import TeamLeadDashboard from './components/TeamLeadDashboard';
 import EmployeeDashboard from './components/EmployeeDashboard';
 import Toast from './components/Toast';
+import AccessibilityToolbar from './components/AccessibilityToolbar';
+import { AccessibilityProvider } from './AccessibilityContext';
 import { USERS, EMPLOYEE_DATA } from './data';
 
 // State is lifted to App so that actions by one role (e.g. an employee reporting
@@ -115,6 +117,8 @@ export default function App() {
   const user = USERS[currentUser];
 
   return (
+    // Provider wraps the entire app so all dashboards and the toolbar share one accessibility state.
+    <AccessibilityProvider>
     <div style={{ minHeight: '100vh' }}>
       <Header
         user={user}
@@ -166,6 +170,10 @@ export default function App() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+      {/* Floating accessibility toolbar — rendered outside main so it stays
+          fixed regardless of which dashboard tab or role is active */}
+      <AccessibilityToolbar />
     </div>
+    </AccessibilityProvider>
   );
 }

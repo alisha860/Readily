@@ -55,3 +55,42 @@ body {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* Text size scaling using CSS zoom so that hardcoded px inline styles also
+   scale up, not just rem-based values. */
+body.text-large  { zoom: 1.2; }
+body.text-xlarge { zoom: 1.4; }
+
+/* Increases visual separation to aid users with low vision or bright lighting. */
+body.high-contrast {
+  background: #ffffff !important;
+}
+
+/* Forces all text to near-black so contrast ratios meet WCAG AA requirements. */
+body.high-contrast span,
+body.high-contrast p,
+body.high-contrast div,
+body.high-contrast h1,
+body.high-contrast h2,
+body.high-contrast h3,
+body.high-contrast label,
+body.high-contrast button {
+  color: #000000;
+}
+
+/* Replaces soft decorative borders with solid visible ones on all panels. */
+body.high-contrast [style*="border-radius"] {
+  border: 2px solid #333 !important;
+  box-shadow: none !important;
+}
+
+/* Ensures interactive buttons remain clearly distinguishable. */
+body.high-contrast button {
+  border: 2px solid #333 !important;
+}
+
+/* Keeps coloured status badges legible by adding a solid border. */
+body.high-contrast span[style*="background"] {
+  font-weight: 900 !important;
+  border: 1px solid #333 !important;
+}
