@@ -221,18 +221,18 @@ export const TEAM_LEAD_DATA = {
 
 export const EMPLOYEE_DATA = {
   announcements: [
-    { id: 1, type: 'alert', icon: '🏢', text: 'CQ-HQ — Your site is closed.' },
-    { id: 2, type: 'info', icon: '👤', text: 'Alisha Ahmad is absent.' },
-    { id: 3, type: 'warning', icon: '⚠️', text: 'Absence levels exceeded threshold.' },
-    { id: 4, type: 'success', icon: '✓', text: 'Your absence request was submitted.' },
-    { id: 5, type: 'info', icon: '👤', text: 'Eugenia Agbukor is absent.' },
-    { id: 6, type: 'info', icon: '👤', text: 'Srivani Pittala is absent.' },
+    { id: 1, type: 'alert',   icon: '🏢', text: 'London HQ is at reduced capacity today — please check with your team lead before coming in.' },
+    { id: 2, type: 'warning', icon: '⚠️', text: 'Team absence is above threshold today. Ensure your status is up to date.' },
+    { id: 3, type: 'info',    icon: '👤', text: 'Theo James has reported absent today (Sickness).' },
+    { id: 4, type: 'info',    icon: '👤', text: 'Emma Watson has reported absent today (Dependent Illness).' },
+    { id: 5, type: 'info',    icon: '📋', text: 'Reminder: all WFH days must be logged before 9am.' },
+    { id: 6, type: 'success', icon: '✓',  text: 'Staffing situation in Operations has been resolved.' },
   ],
   myAbsences: [
-    { date: '12/02/2025', duration: 13, reason: 'Sickness' },
-    { date: '02/01/2025', duration: 17, reason: 'Covid' },
-    { date: '21/11/2024', duration: 3, reason: 'Other' },
-    { date: '17/06/2024', duration: 4, reason: 'Sickness' },
+    { date: '13/12/2025', duration: 13, reason: 'Sickness' },
+    { date: '23/11/2025', duration: 17, reason: 'Covid' },
+    { date: '09/10/2025', duration: 3,  reason: 'Other' },
+    { date: '18/09/2025', duration: 4,  reason: 'Sickness' },
   ],
   myTeam: [
     { id: 1, name: 'Georgia Knight', status: 'available', initials: 'GK' },
@@ -301,12 +301,12 @@ export const EMPLOYEE_DATA = {
     ],
   },
   monthlyAbsence: [
-    { month: 'Jan', days: 17 }, { month: 'Feb', days: 13 },
-    { month: 'Mar', days: 4 },  { month: 'Apr', days: 3 },
+    { month: 'Jan', days: 0 },  { month: 'Feb', days: 0 },
+    { month: 'Mar', days: 0 },  { month: 'Apr', days: 0 },
     { month: 'May', days: 0 },  { month: 'Jun', days: 0 },
     { month: 'Jul', days: 0 },  { month: 'Aug', days: 0 },
-    { month: 'Sep', days: 0 },  { month: 'Oct', days: 0 },
-    { month: 'Nov', days: 0 },  { month: 'Dec', days: 0 },
+    { month: 'Sep', days: 4 },  { month: 'Oct', days: 3 },
+    { month: 'Nov', days: 17 }, { month: 'Dec', days: 13 },
   ],
 };
 

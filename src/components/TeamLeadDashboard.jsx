@@ -1,18 +1,8 @@
 import { useState } from 'react';
-import {
-  PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
-} from 'recharts';
-import WorldMap from './WorldMap';
-import TeamLocator from './TeamLocator';
-import { card, Avatar, TabBar, StatCard, PageHeader, EmptyState } from './shared';
+import { TabBar, PageHeader } from './shared';
 import { TEAM_LEAD_DATA } from '../data';
-
-const STATUS_CONFIG = {
-  available: { dot: '#10b981', label: 'In',  labelColor: '#059669' },
-  absent:    { dot: '#ef4444', label: 'Out', labelColor: '#dc2626' },
-  wfh:       { dot: '#6366f1', label: 'WFH', labelColor: '#4f46e5' },
-};
+import MyTeamTab    from './teamLead/MyTeamTab';
+import AnalyticsTab from './teamLead/AnalyticsTab';
 
 function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   const [notes, setNotes] = useState('');
@@ -60,10 +50,11 @@ function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
 }
 
 export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, addNotification, createEscalation }) {
-  const [activeTab, setActiveTab] = useState('team');
-  const [showModal, setShowModal] = useState(false);
+  const [activeTab,      setActiveTab]      = useState('team');
+  const [showModal,      setShowModal]      = useState(false);
   const [escalateTarget, setEscalateTarget] = useState(null);
-  const [escalation, setEscalation] = useState(null);
+  const [escalation,     setEscalation]     = useState(null);
+
   const { team: baseTeam, comparisonData, sites, wfhVsAbsentTrend, siteAvailability } = TEAM_LEAD_DATA;
 
   const team = baseTeam.map(m => {
@@ -89,11 +80,11 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
   const absentPct    = Math.round(absentCount / team.length * 100);
   const wfhPct       = Math.round(wfhCount    / team.length * 100);
   const inPct        = 100 - absentPct - wfhPct;
+
   const threshold = { green: 15, amber: 25, max: 40 };
   const greenEnd  = (threshold.green / threshold.max) * 100;
   const amberEnd  = (threshold.amber / threshold.max) * 100;
   const markerPos = Math.min((absentPct / threshold.max) * 100, 99);
-
   const readiness = absentPct > 25 ? 'RED' : absentPct > 15 ? 'AMBER' : 'GREEN';
 
   const pieData = [
@@ -102,18 +93,17 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
     { name: 'In',     value: inPct,     color: '#e9d5ff' },
   ].filter(d => d.value > 0);
 
-  const comparisonColors = ['#7c3aed', '#a5b4fc', '#c4b5fd'];
-  const unavailableMembers = team.filter(m => m.status === 'absent');
-  const criticalMembers = team.filter(m => m.criticality === 'essential' || m.criticality === 'critical');
+  const unavailableMembers  = team.filter(m => m.status === 'absent');
+  const criticalMembers     = team.filter(m => m.criticality === 'essential' || m.criticality === 'critical');
   const criticalUnavailable = criticalMembers.filter(m => m.status === 'absent');
-  const availableCritical = criticalMembers.length - criticalUnavailable.length;
-  const openIssues = unavailableMembers.length + criticalUnavailable.length;
+  const availableCritical   = criticalMembers.length - criticalUnavailable.length;
+  const openIssues          = unavailableMembers.length + criticalUnavailable.length;
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
       <PageHeader name={user.name} subtitle="Team Lead Dashboard" />
 
-      {/* Escalation banner — always visible */}
+      {/* Escalation active banner */}
       {escalation && (
         <div style={{
           display: 'flex', alignItems: 'center', gap: 12,
@@ -144,281 +134,40 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
       />
 
       {activeTab === 'team' && (
-        <div style={{ animation: 'slideUp 0.2s ease' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 14 }}>
-            <StatCard
-              label="Team Members"
-              value={team.length}
-              sub={`${team.filter(m => m.location === 'London').length} London / ${team.filter(m => m.location === 'New York').length} NY / ${team.filter(m => m.location === 'Dubai').length} Dubai`}
-              color="#7c3aed" bg="#f5f3ff"
-            />
-            <StatCard
-              label="Available Today"
-              value={presentCount + wfhCount}
-              sub={`${presentCount} office, ${wfhCount} WFH`}
-              color="#059669" bg="#ecfdf5"
-            />
-            <StatCard
-              label="Absent Today"
-              value={absentCount}
-              sub={absentCount ? 'Listed below' : 'No reported absences'}
-              color="#dc2626" bg="#fff1f2"
-            />
-            <StatCard
-              label="Critical Covered"
-              value={`${availableCritical}/${criticalMembers.length}`}
-              sub={criticalUnavailable.length ? `${criticalUnavailable.length} critical unavailable` : 'All critical roles covered'}
-              color={criticalUnavailable.length ? '#d97706' : '#059669'}
-              bg={criticalUnavailable.length ? '#fffbeb' : '#ecfdf5'}
-            />
-          </div>
-
-          {openIssues > 0 && (
-            <div style={{
-              ...card,
-              marginBottom: 14,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              background: '#fffbeb',
-              border: '1.5px solid #fde68a',
-            }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#92400e' }}>Attention needed</div>
-                <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                  {unavailableMembers.length} absence{unavailableMembers.length === 1 ? '' : 's'} logged today
-                  {criticalUnavailable.length ? `, including ${criticalUnavailable.length} critical role${criticalUnavailable.length === 1 ? '' : 's'}` : ''}.
-                </div>
-              </div>
-              <button
-                disabled={!!escalation}
-                onClick={() => { setEscalateTarget(null); setShowModal(true); }}
-                style={{
-                  padding: '9px 14px', borderRadius: 10, border: 'none',
-                  background: escalation ? '#fee2e2' : '#d97706',
-                  color: escalation ? '#dc2626' : 'white',
-                  fontFamily: 'inherit', fontWeight: 800, fontSize: 12,
-                  cursor: escalation ? 'default' : 'pointer', flexShrink: 0,
-                }}
-              >
-                {escalation ? 'Escalation Active' : 'Escalate to HR'}
-              </button>
-            </div>
-          )}
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 14, alignItems: 'start', marginBottom: 14 }}>
-            <div style={card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-                <div>
-                  <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 3 }}>Absences</h3>
-                  <p style={{ fontSize: 11, color: '#9ca3af' }}>People currently marked as absent</p>
-                </div>
-                <span style={{ fontSize: 22, fontWeight: 900, color: absentCount ? '#dc2626' : '#059669', lineHeight: 1 }}>{absentCount}</span>
-              </div>
-
-              {unavailableMembers.length === 0 ? (
-                <EmptyState title="No absences today" message="The team is fully covered." />
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                  {unavailableMembers.map(member => (
-                    <div key={member.id} style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 12px', borderRadius: 12,
-                      background: member.criticality === 'standard' ? '#fff7ed' : '#fff1f2',
-                      border: `1px solid ${member.criticality === 'standard' ? '#fed7aa' : '#fecdd3'}`,
-                    }}>
-                      <Avatar initials={member.initials} size={34} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 12, fontWeight: 800, color: '#1e1b4b' }}>{member.name}</span>
-                          {member.criticality !== 'standard' && (
-                            <span style={{ fontSize: 9, fontWeight: 800, color: '#dc2626', background: '#fee2e2', padding: '2px 7px', borderRadius: 999 }}>
-                              {member.criticality === 'essential' ? 'Essential' : 'Critical'}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
-                          {member.reason || 'Unavailable'}{member.daysAbsent ? ` - ${member.daysAbsent}d out` : ''}{member.expectedReturn ? ` - expected back ${member.expectedReturn}` : ''}
-                        </div>
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontSize: 10, fontWeight: 800, color: '#6b7280' }}>{member.location}</div>
-                        <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{member.role}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-                <div>
-                  <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 3 }}>Critical Roles</h3>
-                  <p style={{ fontSize: 11, color: '#9ca3af' }}>Essential roles that must remain covered</p>
-                </div>
-                <span style={{ fontSize: 22, fontWeight: 900, color: criticalUnavailable.length ? '#d97706' : '#059669', lineHeight: 1 }}>
-                  {availableCritical}/{criticalMembers.length}
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {criticalMembers.map(member => {
-                  const sc = STATUS_CONFIG[member.status] || STATUS_CONFIG.available;
-                  return (
-                    <div key={member.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 10px', borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
-                      <Avatar initials={member.initials} size={32} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#1e1b4b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.name}</div>
-                        <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{member.role} - {member.location}</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: sc.dot }} />
-                        <span style={{ fontSize: 10, fontWeight: 800, color: sc.labelColor }}>{sc.label}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          <TeamLocator team={team} />
-        </div>
+        <MyTeamTab
+          team={team}
+          absentCount={absentCount}
+          presentCount={presentCount}
+          wfhCount={wfhCount}
+          criticalMembers={criticalMembers}
+          criticalUnavailable={criticalUnavailable}
+          availableCritical={availableCritical}
+          unavailableMembers={unavailableMembers}
+          openIssues={openIssues}
+          escalation={escalation}
+          setEscalation={setEscalation}
+          showModal={showModal}
+          setShowModal={setShowModal}
+          setEscalateTarget={setEscalateTarget}
+        />
       )}
 
-      {/* ── TAB: ANALYTICS ────────────────────────────────────────────── */}
       {activeTab === 'analytics' && (
-        <div style={{ animation: 'slideUp 0.2s ease' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, alignItems: 'start', marginBottom: 14 }}>
-
-            {/* Absence donut */}
-            <div style={card}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 4, textAlign: 'center' }}>Team Absence Today</h3>
-              <div style={{ position: 'relative' }}>
-                <ResponsiveContainer width="100%" height={155}>
-                  <PieChart>
-                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={48} outerRadius={65}
-                      dataKey="value" stroke="none" startAngle={90} endAngle={-270}>
-                      {pieData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} formatter={v => [`${v}%`]} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{
-                  position: 'absolute', top: '50%', left: '50%',
-                  transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none',
-                }}>
-                  <div style={{ fontSize: 26, fontWeight: 800, color: '#db2777', lineHeight: 1 }}>{absentPct}%</div>
-                  <div style={{ fontSize: 10, color: '#6b7280', fontWeight: 500 }}>Absent</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 8 }}>
-                {pieData.map(d => (
-                  <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: d.color }} />
-                    <span style={{ fontSize: 10, color: '#6b7280' }}>{d.name} {d.value}%</span>
-                  </div>
-                ))}
-              </div>
-              <p style={{ textAlign: 'center', fontSize: 11, color: '#6b7280', marginTop: 6 }}>
-                {absentCount} of {team.length} team members absent
-              </p>
-            </div>
-
-            {/* Threshold meter */}
-            <div style={card}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 16, textAlign: 'center' }}>Absence Threshold</h3>
-              <div style={{ padding: '0 8px' }}>
-                <div style={{ display: 'flex', marginBottom: 5, fontSize: 10, fontWeight: 700, color: '#6b7280' }}>
-                  <span style={{ flex: greenEnd, textAlign: 'center' }}>Green</span>
-                  <span style={{ flex: amberEnd - greenEnd, textAlign: 'center' }}>Amber</span>
-                  <span style={{ flex: 100 - amberEnd, textAlign: 'center' }}>Red</span>
-                </div>
-                <div style={{ display: 'flex', marginBottom: 8, fontSize: 9, color: '#9ca3af' }}>
-                  <span style={{ flex: greenEnd, textAlign: 'center' }}>0–15%</span>
-                  <span style={{ flex: amberEnd - greenEnd, textAlign: 'center' }}>16–25%</span>
-                  <span style={{ flex: 100 - amberEnd, textAlign: 'center' }}>26%+</span>
-                </div>
-                <div style={{ position: 'relative', height: 14, borderRadius: 7, display: 'flex', overflow: 'hidden' }}>
-                  <div style={{ flex: greenEnd, background: '#10b981' }} />
-                  <div style={{ flex: amberEnd - greenEnd, background: '#f59e0b' }} />
-                  <div style={{ flex: 100 - amberEnd, background: '#ef4444' }} />
-                </div>
-                <div style={{ position: 'relative', height: 12, marginTop: -7 }}>
-                  <div style={{
-                    position: 'absolute', left: `${markerPos}%`, transform: 'translateX(-50%)',
-                    width: 18, height: 18, borderRadius: '50%',
-                    background: '#7c3aed', border: '3px solid white',
-                    boxShadow: '0 2px 6px rgba(124,58,237,0.5)',
-                  }} />
-                </div>
-                <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <span style={{ fontSize: 24, fontWeight: 800, color: readiness === 'RED' ? '#dc2626' : readiness === 'AMBER' ? '#f59e0b' : '#10b981' }}>
-                    {absentPct}%
-                  </span>
-                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-                    Current rate — <strong style={{ color: readiness === 'RED' ? '#dc2626' : readiness === 'AMBER' ? '#f59e0b' : '#10b981' }}>
-                      {readiness === 'RED' ? 'Red' : readiness === 'AMBER' ? 'Amber' : 'Green'}
-                    </strong>
-                  </div>
-                </div>
-                <button onClick={() => showToast('Threshold report submitted to HR for review.', 'info')} style={{
-                  width: '100%', marginTop: 14, padding: '9px', borderRadius: 10,
-                  border: '1.5px solid #7c3aed', background: 'white',
-                  color: '#7c3aed', fontFamily: 'inherit', fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                }}>Report to HR</button>
-              </div>
-            </div>
-
-            {/* Comparison */}
-            <div style={card}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 8, textAlign: 'center' }}>
-                Team Absence Comparison
-              </h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={comparisonData} barCategoryGap="35%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
-                  <XAxis dataKey="team" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
-                  <Tooltip formatter={v => [`${v}%`, 'Absence']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-                  <Bar dataKey="value" name="Absence" radius={[6,6,0,0]}>
-                    {comparisonData.map((_, i) => <Cell key={i} fill={comparisonColors[i]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-              <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: 8 }}>
-                {comparisonData.map((d, i) => (
-                  <div key={d.team} style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: comparisonColors[i] }}>{d.value}%</div>
-                    <div style={{ fontSize: 10, color: '#6b7280' }}>{d.team}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* WFH vs Absent trend + World map */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 14, alignItems: 'start' }}>
-            <div style={card}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>WFH vs Absent Trend</h3>
-              <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Weekly counts for WFH and absence</p>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={wfhVsAbsentTrend} barCategoryGap="30%" barGap={3}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="wfh"    name="WFH"    fill="#6366f1" radius={[4,4,0,0]} />
-                  <Bar dataKey="absent" name="Absent" fill="#f472b6" radius={[4,4,0,0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div style={card}>
-              <WorldMap sites={sites} title="Team Availability by Site" siteStats={siteAvailability} />
-            </div>
-          </div>
-        </div>
+        <AnalyticsTab
+          pieData={pieData}
+          absentPct={absentPct}
+          absentCount={absentCount}
+          team={team}
+          readiness={readiness}
+          markerPos={markerPos}
+          greenEnd={greenEnd}
+          amberEnd={amberEnd}
+          comparisonData={comparisonData}
+          wfhVsAbsentTrend={wfhVsAbsentTrend}
+          sites={sites}
+          siteAvailability={siteAvailability}
+          showToast={showToast}
+        />
       )}
 
       {showModal && (

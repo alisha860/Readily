@@ -1,0 +1,70 @@
+/* ── Shared component utility classes ────────────────────────────────────
+   Use these CSS classes when inline styles are impractical.
+   All values reference tokens from variables.css.
+──────────────────────────────────────────────────────────────────────────── */
+
+/* ── Card ──────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border: var(--card-border);
+  padding: var(--card-padding);
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary  { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; border: none; box-shadow: 0 4px 12px rgba(124,58,237,0.3); }
+.btn-secondary{ background: white; color: var(--primary); border: 1.5px solid var(--primary); }
+.btn-ghost    { background: transparent; color: var(--text-secondary); border: 1.5px solid #e5e7eb; }
+.btn-danger   { background: white; color: var(--danger); border: 1.5px solid var(--danger); }
+.btn-success  { background: white; color: var(--success); border: 1.5px solid var(--success); }
+
+.btn-sm  { padding: 5px 12px;  font-size: 11px; border-radius: var(--radius-sm); }
+.btn-md  { padding: 9px 18px;  font-size: 13px; border-radius: var(--radius-md); }
+.btn-lg  { padding: 12px 24px; font-size: 14px; border-radius: var(--radius-lg); }
+.btn-pill{ border-radius: var(--radius-full) !important; }
+
+/* ── Filter pills ──────────────────────────────────────────────────────── */
+.filter-pill {
+  padding: 5px 13px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid #e5e7eb;
+  background: white;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all 0.15s;
+}
+.filter-pill.active {
+  border-color: transparent;
+  background: rgba(124,58,237,0.1);
+  color: var(--primary);
+  font-weight: 700;
+  outline: 1.5px solid var(--primary);
+}
+
+/* ── Status badges ─────────────────────────────────────────────────────── */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-full); font-size: 10px; font-weight: 700; }
+.badge-stable   { background: #d1fae5; color: #065f46; }
+.badge-warning  { background: #fef3c7; color: #92400e; }
+.badge-critical { background: #fee2e2; color: #991b1b; }
+.badge-monitor  { background: #dbeafe; color: #1e40af; }
+
+/* ── Status dot ────────────────────────────────────────────────────────── */
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }

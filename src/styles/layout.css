@@ -1,0 +1,32 @@
+/* ── Layout utility classes ──────────────────────────────────────────────
+   Convenience classes for common grid and flex patterns used across
+   all three dashboard views.
+──────────────────────────────────────────────────────────────────────────── */
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--gap-md); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap-md); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gap-md); }
+
+/* Flex helpers */
+.flex        { display: flex; align-items: center; }
+.flex-col    { display: flex; flex-direction: column; }
+.flex-between{ display: flex; align-items: center; justify-content: space-between; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-wrap   { flex-wrap: wrap; }
+
+/* Gap */
+.gap-xs { gap: var(--gap-xs); }
+.gap-sm { gap: var(--gap-sm); }
+.gap-md { gap: var(--gap-md); }
+.gap-lg { gap: var(--gap-lg); }
+
+/* Margin-bottom helpers */
+.mb-sm { margin-bottom: var(--gap-sm); }
+.mb-md { margin-bottom: var(--gap-md); }
+.mb-lg { margin-bottom: var(--gap-lg); }
+.mb-xl { margin-bottom: var(--gap-xl); }
+
+/* Animation helpers */
+.slide-up { animation: slideUp 0.2s ease; }
+.fade-in  { animation: fadeIn  0.2s ease; }
