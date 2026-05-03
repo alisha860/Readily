@@ -229,10 +229,10 @@ export const EMPLOYEE_DATA = {
     { id: 6, type: 'success', icon: '✓',  text: 'Staffing situation in Operations has been resolved.' },
   ],
   myAbsences: [
-    { date: '13/12/2025', duration: 13, reason: 'Sickness' },
-    { date: '23/11/2025', duration: 17, reason: 'Covid' },
-    { date: '09/10/2025', duration: 3,  reason: 'Other' },
-    { date: '18/09/2025', duration: 4,  reason: 'Sickness' },
+    { date: '14/04/2026', duration: 13, reason: 'Sickness' },
+    { date: '11/03/2026', duration: 4,  reason: 'Other' },
+    { date: '08/02/2026', duration: 3,  reason: 'Covid' },
+    { date: '03/01/2026', duration: 17, reason: 'Sickness' },
   ],
   myTeam: [
     { id: 1, name: 'Georgia Knight', status: 'available', initials: 'GK' },
@@ -301,12 +301,12 @@ export const EMPLOYEE_DATA = {
     ],
   },
   monthlyAbsence: [
-    { month: 'Jan', days: 0 },  { month: 'Feb', days: 0 },
-    { month: 'Mar', days: 0 },  { month: 'Apr', days: 0 },
+    { month: 'Jan', days: 17 }, { month: 'Feb', days: 3 },
+    { month: 'Mar', days: 4 },  { month: 'Apr', days: 13 },
     { month: 'May', days: 0 },  { month: 'Jun', days: 0 },
     { month: 'Jul', days: 0 },  { month: 'Aug', days: 0 },
-    { month: 'Sep', days: 4 },  { month: 'Oct', days: 3 },
-    { month: 'Nov', days: 17 }, { month: 'Dec', days: 13 },
+    { month: 'Sep', days: 0 },  { month: 'Oct', days: 0 },
+    { month: 'Nov', days: 0 },  { month: 'Dec', days: 0 },
   ],
 };
 

@@ -17,7 +17,7 @@ export default function MyTeamTab({
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
       {/* KPI strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         <StatCard
           label="Team Members" value={team.length}
           sub={`${team.filter(m => m.location === 'London').length} London / ${team.filter(m => m.location === 'New York').length} NY / ${team.filter(m => m.location === 'Dubai').length} Dubai`}
@@ -58,7 +58,7 @@ export default function MyTeamTab({
       )}
 
       {/* Absences + Critical Roles grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 14, alignItems: 'start', marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 14, marginBottom: 14 }}>
         {/* Absences card */}
         <div style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>

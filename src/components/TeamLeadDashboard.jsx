@@ -49,7 +49,7 @@ function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   );
 }
 
-export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, addNotification, createEscalation }) {
+export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, employeeExpectedReturn, addNotification, createEscalation }) {
   const [activeTab,      setActiveTab]      = useState('team');
   const [showModal,      setShowModal]      = useState(false);
   const [escalateTarget, setEscalateTarget] = useState(null);
@@ -66,7 +66,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
         reason: employeeAbsent ? 'Suspected Illness' : m.reason,
         absenceCategory: employeeAbsent ? 'health' : m.absenceCategory,
         healthStatus: employeeAbsent ? 'symptomatic' : employeeWFH ? 'healthy' : m.healthStatus,
-        expectedReturn: employeeAbsent ? 'TBC' : m.expectedReturn,
+        expectedReturn: employeeAbsent ? (employeeExpectedReturn ?? 'TBC') : m.expectedReturn,
         desk: employeeWFH || employeeAbsent ? null : m.desk,
         schedule: { ...m.schedule, Tue: liveScheduleStatus },
       };
@@ -179,7 +179,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
             const created = createEscalation?.({
               targetName: escalateTarget?.name ?? null,
               notes,
-              absencePct,
+              absencePct: absentPct,
             });
             setEscalation({
               id: created?.id,

@@ -66,10 +66,10 @@ export default function OverviewTab({
       </div>
 
       {/* Readiness + Live Status | Risk Management | Department Coverage */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,1fr) 2fr minmax(260px,1.3fr)', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,1fr) 2fr minmax(260px,1.3fr)', gap: 14 }}>
 
         {/* Left column: Readiness gauge + Live Status pie */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignSelf: 'start' }}>
 
           {/* Readiness Score gauge */}
           <div style={{ ...card, textAlign: 'center', padding: '14px 18px 10px' }}>
@@ -261,40 +261,35 @@ export default function OverviewTab({
 
       {/* Alert Staff panel */}
       <div style={{ ...card, marginTop: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg,#7c3aed,#db2777)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>📢</div>
-          <div>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>Alert Staff</h3>
-            <p style={{ fontSize: 11, color: '#9ca3af' }}>Send a dashboard announcement to employees</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', whiteSpace: 'nowrap' }}>Alert Staff</h3>
+          <p style={{ fontSize: 12, color: '#9ca3af', flex: 1 }}>Send a dashboard announcement to employees</p>
+          <div style={{ display: 'flex', gap: 7, flexShrink: 0, flexWrap: 'wrap' }}>
+            {[
+              { key: 'alert', label: 'Site closure',    text: 'Your site has a change in operational status. Please check the site status strip for updates.' },
+              { key: 'info',  label: 'Policy reminder', text: 'Reminder: all WFH days must be logged in the system before 9am.' },
+            ].map(t => (
+              <button key={t.key} onClick={() => { setAlertMsg(t.text); setAlertType(t.key); }} style={{
+                fontSize: 11, padding: '5px 13px', borderRadius: 20,
+                border: `1.5px solid ${alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#d1d5db'}`,
+                background: alertType === t.key && alertMsg === t.text ? 'rgba(124,58,237,0.08)' : 'white',
+                color: alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#6b7280',
+                cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.12s',
+              }}>{t.label}</button>
+            ))}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-          {[
-            { key: 'alert',   label: 'Site closure',       text: 'Your site has a change in operational status. Please check the site status strip for updates.' },
-            { key: 'warning', label: 'High absence',        text: 'Absence levels are above threshold today. Please ensure your status is up to date.' },
-            { key: 'info',    label: 'Policy reminder',     text: 'Reminder: all WFH days must be logged in the system before 9am.' },
-            { key: 'success', label: 'Situation resolved',  text: 'The staffing situation has been resolved. Normal operations resume.' },
-          ].map(t => (
-            <button key={t.key} onClick={() => { setAlertMsg(t.text); setAlertType(t.key); }} style={{
-              fontSize: 11, padding: '5px 12px', borderRadius: 20,
-              border: `1.5px solid ${alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#e5e7eb'}`,
-              background: alertType === t.key && alertMsg === t.text ? 'rgba(124,58,237,0.08)' : 'white',
-              color: alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#6b7280',
-              cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.12s',
-            }}>{t.label}</button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <textarea
             value={alertMsg}
             onChange={e => setAlertMsg(e.target.value)}
             placeholder="Type a custom message or pick a template above…"
-            style={{ flex: 1, padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontFamily: 'inherit', fontSize: 12, resize: 'none', height: 52, outline: 'none', color: '#374151' }}
+            style={{ flex: 1, padding: '9px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontFamily: 'inherit', fontSize: 12, resize: 'none', height: 46, outline: 'none', color: '#374151' }}
           />
           <button
             disabled={!alertMsg.trim()}
             onClick={() => {
-              const icons = { alert: '🏢', warning: '⚠️', info: '📋', success: '✓' };
+              const icons = { alert: '🏢', info: '📋' };
               pushStaffAnnouncement?.(alertMsg.trim(), alertType, icons[alertType] || '📢');
               showToast('Announcement sent to all staff.', 'success');
               setAlertMsg('');
@@ -308,7 +303,7 @@ export default function OverviewTab({
               boxShadow: alertMsg.trim() ? '0 4px 12px rgba(124,58,237,0.3)' : 'none',
               transition: 'all 0.15s',
             }}
-          >Send Alert</button>
+          >Send</button>
         </div>
       </div>
     </div>

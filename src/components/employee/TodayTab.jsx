@@ -1,6 +1,19 @@
-import DeskMap from '../DeskMap';
 import { card } from '../shared';
-import { EMPLOYEE_DATA, HR_DATA, SITE_STATUS_COLORS } from '../../data';
+import { EMPLOYEE_DATA } from '../../data';
+
+const DESK_MAP = {
+  A: ['closed', 'present', 'present', 'present', 'closed', 'closed', 'closed', 'remote'],
+  B: ['present', 'closed', 'closed', 'present', 'present', 'remote', 'closed', 'present'],
+  C: ['remote',  'closed', 'yours',  'remote',  'closed',  'closed', 'present', 'closed'],
+};
+
+const DESK_STYLES = {
+  present: { bg: '#dcfce7', border: '#16a34a', color: '#15803d' },
+  closed:  { bg: '#fef3c7', border: '#d97706', color: '#92400e' },
+  remote:  { bg: '#dbeafe', border: '#93c5fd', color: '#1d4ed8' },
+  yours:   { bg: '#ffffff', border: '#ec4899', color: '#ec4899' },
+  empty:   { bg: '#ffffff', border: '#e5e7eb', color: '#9ca3af' },
+};
 
 // Background tint per announcement type.
 const ANNOUNCEMENT_STYLES = {
@@ -22,9 +35,7 @@ export default function TodayTab({
   setActiveTab,
   showToast,
 }) {
-  const { myTeam, absenceReasons, absenceDurations, deskBooking } = EMPLOYEE_DATA;
-  const mySite = HR_DATA.sites[0];
-  const siteColor = SITE_STATUS_COLORS[mySite.status];
+  const { myTeam, absenceReasons, absenceDurations } = EMPLOYEE_DATA;
 
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
@@ -36,10 +47,10 @@ export default function TodayTab({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Your site</span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: `${siteColor}14`, border: `1px solid ${siteColor}40`, borderRadius: 20, padding: '2px 9px 2px 6px' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: siteColor, display: 'inline-block' }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{mySite.name}</span>
-            <span style={{ fontSize: 11, color: siteColor, fontWeight: 500, textTransform: 'capitalize' }}>{mySite.status}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#fef3c714', border: '1px solid #d97706', borderRadius: 20, padding: '2px 9px 2px 6px' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>London</span>
+            <span style={{ fontSize: 11, color: '#f59e0b', fontWeight: 500 }}>Partial</span>
           </div>
         </div>
         <div style={{ width: 1, height: 18, background: '#e5e7eb' }} />
@@ -54,7 +65,7 @@ export default function TodayTab({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
         {/* Announcements */}
         <div style={card}>
@@ -153,12 +164,59 @@ export default function TodayTab({
         </div>
       </div>
 
-      {/* Desk map */}
-      {deskBooking && (
-        <div style={{ ...card, marginTop: 20 }}>
-          <DeskMap booking={deskBooking} isWFH={isWFH} showToast={showToast} />
+      {/* Site Overview — desk map */}
+      <div style={{ ...card, marginTop: 14 }}>
+        <div style={{ marginBottom: 14 }}>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Site Overview</h3>
+          <p style={{ fontSize: 11, color: '#6b7280' }}>London - Team Bay A</p>
         </div>
-      )}
+
+        {/* Stats row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#d1fae5', border: '1px solid #6ee7b7', textAlign: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#065f46' }}>15 Present</span>
+          </div>
+          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#fef3c7', border: '1px solid #fcd34d', textAlign: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>14 Desks Closed</span>
+          </div>
+          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#dbeafe', border: '1px solid #93c5fd', textAlign: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#1e40af' }}>3 Remote</span>
+          </div>
+        </div>
+
+        {/* Status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
+          <span style={{ fontSize: 13 }}>⚠️</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b' }}>Status: Reduced Capacity</span>
+        </div>
+        <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 16 }}>View current on-site presence and availability</p>
+
+        {/* Desk rows */}
+        {Object.entries(DESK_MAP).map(([row, desks]) => (
+          <div key={row} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', width: 14, flexShrink: 0 }}>{row}</span>
+            {desks.map((status, i) => {
+              const label = `${row}${i + 1}`;
+              const s = DESK_STYLES[status] || DESK_STYLES.empty;
+              return (
+                <div key={label} style={{
+                  flex: 1, height: 36, borderRadius: 8,
+                  background: s.bg, border: `1.5px solid ${s.border}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color }}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+
+        {/* Legend */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+          <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #ec4899', background: 'white', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: '#6b7280' }}>Your Allocation</span>
+        </div>
+      </div>
     </div>
   );
 }

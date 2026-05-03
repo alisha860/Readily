@@ -7,7 +7,7 @@ const MY_STATS = {
   daysAbsentYear: 37,
   allowanceTotal: 50,
   allowanceUsed: 37,
-  lastAbsence: '13/12/2025',
+  lastAbsence: '14/04/2026',
 };
 
 // Static current status — shown in the Current Status card below Absence History.

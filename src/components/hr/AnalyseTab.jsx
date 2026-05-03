@@ -164,99 +164,105 @@ export default function AnalyseTab({
         )}
       </div>
 
-      {/* Absence Trend + World Map */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: 14, alignItems: 'start' }}>
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>Absence Trend</h3>
-            <div style={{ display: 'flex', gap: 4 }}>
-              {PERIODS.map(p => (
-                <button key={p.key} onClick={() => setFilterPeriod(p.key)} style={{
-                  padding: '3px 8px', borderRadius: 6, border: 'none',
-                  background: filterPeriod === p.key ? '#2563eb' : '#f3f4f6',
-                  color: filterPeriod === p.key ? 'white' : '#6b7280',
-                  fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                }}>{p.label.replace('This ', '')}</button>
-              ))}
+      {/* Absence Trend + Return Forecast (left) | World Map (right) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: 14, marginBottom: 14 }}>
+        {/* Left column — stacked so the two cards fill the map's height */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Absence Trend */}
+          <div style={card}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>Absence Trend</h3>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {PERIODS.map(p => (
+                  <button key={p.key} onClick={() => setFilterPeriod(p.key)} style={{
+                    padding: '3px 8px', borderRadius: 6, border: 'none',
+                    background: filterPeriod === p.key ? '#2563eb' : '#f3f4f6',
+                    color: filterPeriod === p.key ? 'white' : '#6b7280',
+                    fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  }}>{p.label.replace('This ', '')}</button>
+                ))}
+              </div>
+            </div>
+            <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>Dashed line = 15% threshold</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={activeTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
+                <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
+                <Tooltip formatter={v => [`${v}%`, 'Absence']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
+                <ReferenceLine y={15} stroke="#10b981" strokeDasharray="4 2" strokeWidth={1.5} />
+                <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2.5} dot={{ fill: '#2563eb', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+            {(() => {
+              const first = activeTrend[0].value;
+              const last  = activeTrend[activeTrend.length - 1].value;
+              const pct   = Math.round(Math.abs(last - first) / first * 100);
+              const up    = last > first;
+              return (
+                <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: up ? '#fff1f2' : '#f0fdf4', border: `1px solid ${up ? '#fecdd3' : '#bbf7d0'}` }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: up ? '#dc2626' : '#059669' }}>{up ? '↑ Trending up' : '↓ Trending down'}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>{up ? '+' : '-'}{pct}% — {up ? 'review advised' : 'improving'}</span>
+                </div>
+              );
+            })()}
+          </div>
+
+          {/* Return Forecast — moved up to fill the left column */}
+          <div style={card}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Return Forecast</h3>
+            <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Expected returns from absence or leave</p>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={returnForecast} layout="vertical" margin={{ top: 0, right: 16, left: 4, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" horizontal={false} />
+                <XAxis type="number" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                <YAxis dataKey="label" type="category" tick={{ fontSize: 11, fill: '#374151', fontWeight: 600 }} axisLine={false} tickLine={false} width={62} />
+                <Tooltip formatter={v => [`${v} staff`, 'Returning']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
+                <Bar dataKey="returning" name="Returning" fill="#10b981" radius={[0,4,4,0]} />
+              </BarChart>
+            </ResponsiveContainer>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#059669' }}>{returnForecast.reduce((s, d) => s + d.returning, 0)} staff</span>
+              <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 5 }}>returning across the next two weeks</span>
             </div>
           </div>
-          <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>Dashed line = 15% threshold</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={activeTrend} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} tickFormatter={v => `${v}%`} />
-              <Tooltip formatter={v => [`${v}%`, 'Absence']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-              <ReferenceLine y={15} stroke="#10b981" strokeDasharray="4 2" strokeWidth={1.5} />
-              <Line type="monotone" dataKey="value" stroke="#2563eb" strokeWidth={2.5} dot={{ fill: '#2563eb', r: 4, strokeWidth: 0 }} activeDot={{ r: 6 }} />
-            </LineChart>
-          </ResponsiveContainer>
-          {(() => {
-            const first = activeTrend[0].value;
-            const last  = activeTrend[activeTrend.length - 1].value;
-            const pct   = Math.round(Math.abs(last - first) / first * 100);
-            const up    = last > first;
-            return (
-              <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: up ? '#fff1f2' : '#f0fdf4', border: `1px solid ${up ? '#fecdd3' : '#bbf7d0'}` }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: up ? '#dc2626' : '#059669' }}>{up ? '↑ Trending up' : '↓ Trending down'}</span>
-                <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>{up ? '+' : '-'}{pct}% — {up ? 'review advised' : 'improving'}</span>
-              </div>
-            );
-          })()}
         </div>
+
+        {/* Right — World Map */}
         <div style={card}><WorldMap sites={activeSites} title="Global Site Status" /></div>
       </div>
 
-      {/* Workforce Distribution + Return Forecast */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 14, marginTop: 14, alignItems: 'start' }}>
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Workforce Distribution</h3>
-              <p style={{ fontSize: 11, color: '#9ca3af' }}>Workforce split by office, WFH, absence, and leave</p>
-            </div>
-            <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 10, padding: 3 }}>
-              {PERIODS.map(p => (
-                <button key={p.key} onClick={() => setStackedPeriod(p.key)} style={{
-                  padding: '4px 10px', borderRadius: 7, border: 'none',
-                  background: stackedPeriod === p.key ? '#7c3aed' : 'transparent',
-                  color: stackedPeriod === p.key ? 'white' : '#6b7280',
-                  fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-                }}>{p.label.replace('This ', '')}</button>
-              ))}
-            </div>
+      {/* Workforce Distribution — full width */}
+      <div style={card}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <div>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Workforce Distribution</h3>
+            <p style={{ fontSize: 11, color: '#9ca3af' }}>Workforce split by office, WFH, absence, and leave</p>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={workforceTrendStacked[stackedPeriod]} barCategoryGap="28%">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-              <Legend wrapperStyle={{ fontSize: 10 }} />
-              <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#6366f1" />
-              <Bar dataKey="wfh"      name="WFH"       stackId="a" fill="#8b5cf6" />
-              <Bar dataKey="absent"   name="Absent"    stackId="a" fill="#f472b6" />
-              <Bar dataKey="onLeave"  name="On Leave"  stackId="a" fill="#a5b4fc" radius={[3,3,0,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <div style={card}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Return Forecast</h3>
-          <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Expected returns from absence or leave</p>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={returnForecast} layout="vertical" margin={{ top: 0, right: 16, left: 4, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" horizontal={false} />
-              <XAxis type="number" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
-              <YAxis dataKey="label" type="category" tick={{ fontSize: 11, fill: '#374151', fontWeight: 600 }} axisLine={false} tickLine={false} width={62} />
-              <Tooltip formatter={v => [`${v} staff`, 'Returning']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-              <Bar dataKey="returning" name="Returning" fill="#10b981" radius={[0,4,4,0]} />
-            </BarChart>
-          </ResponsiveContainer>
-          <div style={{ marginTop: 10, padding: '8px 12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#059669' }}>{returnForecast.reduce((s, d) => s + d.returning, 0)} staff</span>
-            <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 5 }}>returning across the next two weeks</span>
+          <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 10, padding: 3 }}>
+            {PERIODS.map(p => (
+              <button key={p.key} onClick={() => setStackedPeriod(p.key)} style={{
+                padding: '4px 10px', borderRadius: 7, border: 'none',
+                background: stackedPeriod === p.key ? '#7c3aed' : 'transparent',
+                color: stackedPeriod === p.key ? 'white' : '#6b7280',
+                fontSize: 10, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              }}>{p.label.replace('This ', '')}</button>
+            ))}
           </div>
         </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={workforceTrendStacked[stackedPeriod]} barCategoryGap="28%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
+            <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+            <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
+            <Legend wrapperStyle={{ fontSize: 10 }} />
+            <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#6366f1" />
+            <Bar dataKey="wfh"      name="WFH"       stackId="a" fill="#8b5cf6" />
+            <Bar dataKey="absent"   name="Absent"    stackId="a" fill="#f472b6" />
+            <Bar dataKey="onLeave"  name="On Leave"  stackId="a" fill="#a5b4fc" radius={[3,3,0,0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );

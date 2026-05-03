@@ -53,7 +53,7 @@ export default function ReportsTab({
 
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
 
         {/* Report builder */}
         <div style={card}>

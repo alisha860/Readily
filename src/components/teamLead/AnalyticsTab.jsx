@@ -15,7 +15,7 @@ export default function AnalyticsTab({
 }) {
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, alignItems: 'start', marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
 
         {/* Team Absence donut */}
         <div style={card}>
@@ -103,7 +103,7 @@ export default function AnalyticsTab({
       </div>
 
       {/* WFH vs Absent Trend + World Map */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 14, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 14 }}>
         <div style={card}>
           <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>WFH vs Absent Trend</h3>
           <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Weekly counts</p>

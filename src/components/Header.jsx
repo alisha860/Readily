@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { USERS } from '../data';
+import { ROLE_DEFAULTS, getTheme } from '../themes';
 import { Avatar } from './shared';
 
 const USER_LIST = [
@@ -23,19 +24,48 @@ function timeAgo(date) {
   return `${Math.floor(mins / 60)}h ago`;
 }
 
-export default function Header({ user, currentUser, setCurrentUser, notifications = [], markNotificationsRead }) {
-  const [open, setOpen] = useState(false);
-  const [bellOpen, setBellOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const ref = useRef(null);
-  const bellRef = useRef(null);
-  const helpRef = useRef(null);
+function PaletteIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="13.5" cy="6.5"  r="0.5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r="0.5" fill="currentColor" />
+      <circle cx="8.5"  cy="7.5"  r="0.5" fill="currentColor" />
+      <circle cx="6.5"  cy="12.5" r="0.5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    </svg>
+  );
+}
+
+const iconBtn = {
+  background: 'none', border: 'none', cursor: 'pointer',
+  padding: 6, borderRadius: 8,
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  color: 'var(--c-text-2)',
+  transition: 'background 0.12s, color 0.12s',
+};
+
+export default function Header({
+  user, currentUser, setCurrentUser,
+  notifications = [], markNotificationsRead,
+  userThemes, setUserTheme, allThemes,
+}) {
+  const [open,      setOpen]      = useState(false);
+  const [bellOpen,  setBellOpen]  = useState(false);
+  const [helpOpen,  setHelpOpen]  = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
+
+  const ref      = useRef(null);
+  const bellRef  = useRef(null);
+  const helpRef  = useRef(null);
+  const themeRef = useRef(null);
 
   useEffect(() => {
     function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-      if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
-      if (helpRef.current && !helpRef.current.contains(e.target)) setHelpOpen(false);
+      if (ref.current      && !ref.current.contains(e.target))      setOpen(false);
+      if (bellRef.current  && !bellRef.current.contains(e.target))  setBellOpen(false);
+      if (helpRef.current  && !helpRef.current.contains(e.target))  setHelpOpen(false);
+      if (themeRef.current && !themeRef.current.contains(e.target)) setThemeOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
@@ -49,11 +79,20 @@ export default function Header({ user, currentUser, setCurrentUser, notification
     if (!bellOpen && unread > 0) markNotificationsRead?.();
   }
 
+  const panel = {
+    position: 'absolute', top: 'calc(100% + 8px)',
+    background: 'var(--c-surface)',
+    borderRadius: 14,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06)',
+    border: '1px solid var(--accent-a12)',
+    zIndex: 200,
+  };
+
   return (
     <header style={{
-      background: 'rgba(255,255,255,0.94)',
+      background: 'var(--c-header)',
       backdropFilter: 'blur(16px)',
-      borderBottom: '1px solid rgba(124,58,237,0.1)',
+      borderBottom: '1px solid var(--accent-a10)',
       position: 'sticky', top: 0, zIndex: 100,
     }}>
       <div style={{
@@ -63,11 +102,8 @@ export default function Header({ user, currentUser, setCurrentUser, notification
       }}>
 
         {/* Logo */}
-        <img
-          src="/image.png"
-          alt="Readily"
-          style={{ height: 36, objectFit: 'contain', userSelect: 'none' }}
-        />
+        <img src="/image.png" alt="Readily"
+          style={{ height: 36, objectFit: 'contain', userSelect: 'none' }} />
 
         {/* User selector */}
         <div ref={ref} style={{ position: 'relative' }}>
@@ -76,11 +112,11 @@ export default function Header({ user, currentUser, setCurrentUser, notification
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '7px 14px 7px 8px',
-              borderRadius: 40, border: '1.5px solid rgba(124,58,237,0.2)',
-              background: open ? 'rgba(124,58,237,0.06)' : 'rgba(124,58,237,0.04)',
+              borderRadius: 40, border: '1.5px solid var(--accent-a20)',
+              background: open ? 'var(--accent-a06)' : 'var(--accent-a04)',
               cursor: 'pointer', fontFamily: 'inherit',
               transition: 'all 0.15s ease',
-              boxShadow: open ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+              boxShadow: open ? '0 0 0 3px var(--accent-a10)' : 'none',
             }}
           >
             <Avatar initials={currentEntry.initials} size={30} bg={user.avatarBg} />
@@ -88,36 +124,32 @@ export default function Header({ user, currentUser, setCurrentUser, notification
               <div style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', lineHeight: 1.2 }}>
                 {currentEntry.label}
               </div>
-              <div style={{ fontSize: 10, color: '#7c3aed', fontWeight: 500 }}>
+              <div style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 500 }}>
                 {currentEntry.sublabel}
               </div>
             </div>
-            <svg
-              width="14" height="14" viewBox="0 0 24 24" fill="none"
-              stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              style={{ transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none', marginLeft: 2 }}
-            >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', marginLeft: 2 }}>
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
 
           {open && (
             <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'white', borderRadius: 14,
-              boxShadow: '0 8px 32px rgba(30,27,75,0.15), 0 2px 8px rgba(0,0,0,0.06)',
-              border: '1px solid rgba(124,58,237,0.12)',
+              ...panel,
+              left: '50%', transform: 'translateX(-50%)',
               padding: 6, minWidth: 210,
               animation: 'slideUp 0.15s ease',
-              zIndex: 200,
             }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.6px', padding: '6px 10px 4px' }}>
-                Switch User
-              </p>
+              <p style={{
+                fontSize: 10, fontWeight: 700, color: '#9ca3af',
+                textTransform: 'uppercase', letterSpacing: '0.6px',
+                padding: '6px 10px 4px',
+              }}>Switch User</p>
               {USER_LIST.map(u => {
-                const active = u.id === currentUser;
-                const uData = USERS[u.id];
+                const active  = u.id === currentUser;
+                const uTheme  = getTheme(userThemes?.[u.id] ?? ROLE_DEFAULTS[u.id]);
                 return (
                   <button
                     key={u.id}
@@ -127,20 +159,20 @@ export default function Header({ user, currentUser, setCurrentUser, notification
                       width: '100%', padding: '9px 10px',
                       borderRadius: 10, border: 'none', cursor: 'pointer',
                       fontFamily: 'inherit', textAlign: 'left',
-                      background: active ? 'rgba(124,58,237,0.08)' : 'transparent',
+                      background: active ? 'var(--accent-a08)' : 'transparent',
                       transition: 'background 0.12s',
                     }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(124,58,237,0.04)'; }}
+                    onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--accent-a04)'; }}
                     onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <Avatar initials={u.initials} size={34} bg={uData.avatarBg} />
+                    <Avatar initials={u.initials} size={34} bg={uTheme.avatarBg} />
                     <div>
                       <div style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>{u.label}</div>
-                      <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 500 }}>{u.sublabel}</div>
+                      <div style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 500 }}>{u.sublabel}</div>
                     </div>
                     {active && (
                       <svg style={{ marginLeft: 'auto' }} width="16" height="16" viewBox="0 0 24 24" fill="none"
-                        stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     )}
@@ -152,108 +184,138 @@ export default function Header({ user, currentUser, setCurrentUser, notification
         </div>
 
         {/* Right nav */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+
+          {/* Help */}
           <div ref={helpRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setHelpOpen(o => !o)}
-              style={{
-                color: helpOpen ? '#7c3aed' : '#6b7280',
-                fontSize: 13,
-                fontWeight: 500,
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
+              style={{ ...iconBtn, padding: '6px 10px', fontSize: 13, fontWeight: 500, color: helpOpen ? 'var(--accent)' : '#6b7280' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-a06)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               help
             </button>
             {helpOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 12px)', right: -70,
-                width: 300, background: 'white', borderRadius: 14,
-                boxShadow: '0 8px 32px rgba(30,27,75,0.15), 0 2px 8px rgba(0,0,0,0.06)',
-                border: '1px solid rgba(124,58,237,0.12)',
-                padding: 16, zIndex: 220,
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 8 }}>
-                  Help Centre
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              <div style={{ ...panel, right: -70, width: 280, padding: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 12 }}>Quick Guide</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    {
-                      title: 'HR Manager',
-                      items: [
-                        'Overview tab — live KPIs, readiness score, risk management, and department coverage.',
-                        'Click "Deploy Reserve" on any department below minimum staffing to assign staff.',
-                        'Use the Alert Staff panel to push announcements to all employees.',
-                        'Analyse tab — filter by department or period, view absence trends and the world map.',
-                        'Reports tab — configure and download workforce reports for leadership.',
-                        'Escalations from team leads appear in the Overview tab for review.',
-                      ],
-                    },
-                    {
-                      title: 'Team Lead',
-                      items: [
-                        'My Team tab — see today\’s absences, critical-role coverage, and the weekly schedule.',
-                        'Click "Escalate to HR" when absence levels exceed thresholds or critical roles are uncovered.',
-                        'Analytics tab — track absence rate vs threshold, compare with other teams, and view trends.',
-                        'The weekly schedule grid shows each team member\’s office, WFH, leave, or absence plan.',
-                        'Filter the schedule by location (London, New York, Dubai).',
-                      ],
-                    },
-                    {
-                      title: 'Employee',
-                      items: [
-                        'Today tab — report an absence or log a WFH day using the form on the right.',
-                        'Select a reason and estimated duration; your manager is notified automatically.',
-                        'Dismiss announcements from HR using the × button.',
-                        'Use the desk map to see floor occupancy and book a desk for tomorrow.',
-                        'My Record tab — view Bradford factor, absence allowance, and full absence history.',
-                        'Withdraw a past absence record using the Withdraw button in the history table.',
-                      ],
-                    },
-                  ].map(role => (
-                    <div key={role.title} style={{ paddingBottom: 8, borderBottom: '1px solid #f3f4f6' }}>
-                      <div style={{ fontSize: 11, fontWeight: 800, color: '#7c3aed', marginBottom: 4 }}>{role.title}</div>
-                      <ul style={{ margin: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        {role.items.map(item => (
-                          <li key={item} style={{ fontSize: 11, color: '#6b7280', lineHeight: 1.45 }}>{item}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+                    { id: 'hr',       icon: '👩‍💼', title: 'HR Manager', items: [
+                      'Overview — KPIs, risk alerts, department coverage',
+                      'Deploy reserve staff to understaffed departments',
+                      'Alert Staff — push announcements to all employees',
+                      'Analyse — absence trends, site map, workforce split',
+                      'Reports — configure and download workforce reports',
+                    ]},
+                    { id: 'teamlead', icon: '👤', title: 'Team Lead', items: [
+                      'My Team — absences, critical roles, weekly schedule',
+                      'Escalate to HR when thresholds are breached',
+                      'Analytics — absence rate, team comparison, trends',
+                    ]},
+                    { id: 'employee', icon: '🙋', title: 'Employee', items: [
+                      'Today — report absence or log WFH; manager notified',
+                      'Site Overview — current bay and desk availability',
+                      'My Record — allowance, history, contacts',
+                    ]},
+                  ].map(role => {
+                    const isActive = currentUser === role.id;
+                    return (
+                      <div key={role.id} style={{
+                        borderRadius: 10, padding: '8px 10px',
+                        background: isActive ? 'var(--accent-a06)' : '#f9fafb',
+                        border: `1px solid ${isActive ? 'var(--accent-a20)' : 'transparent'}`,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                          <span style={{ fontSize: 13 }}>{role.icon}</span>
+                          <span style={{ fontSize: 11, fontWeight: 800, color: isActive ? 'var(--accent)' : '#374151' }}>{role.title}</span>
+                          {isActive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-a10)', padding: '1px 6px', borderRadius: 10 }}>You</span>}
+                        </div>
+                        <ul style={{ margin: 0, paddingLeft: 14, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          {role.items.map(item => (
+                            <li key={item} style={{ fontSize: 11, color: isActive ? '#4b5563' : '#9ca3af', lineHeight: 1.4 }}>{item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
                 </div>
                 <button
                   onClick={() => setHelpOpen(false)}
                   style={{
                     marginTop: 12, width: '100%', padding: '8px 10px', borderRadius: 9,
-                    border: '1px solid #e9d5ff', background: '#f8f7ff',
-                    color: '#7c3aed', fontFamily: 'inherit', fontSize: 11,
+                    border: '1px solid var(--accent-a20)', background: 'var(--accent-a04)',
+                    color: 'var(--accent)', fontFamily: 'inherit', fontSize: 11,
                     fontWeight: 800, cursor: 'pointer',
                   }}
-                >
-                  Got it
-                </button>
+                >Got it</button>
               </div>
             )}
           </div>
+
+          {/* Theme picker */}
+          <div ref={themeRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setThemeOpen(o => !o)}
+              title="Choose theme"
+              style={{ ...iconBtn, color: themeOpen ? 'var(--accent)' : '#6b7280' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-a06)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <PaletteIcon />
+            </button>
+
+            {themeOpen && (
+              <div style={{
+                ...panel,
+                right: 0, padding: '14px 16px', minWidth: 220,
+                animation: 'slideUp 0.15s ease',
+              }}>
+                <p style={{
+                  fontSize: 10, fontWeight: 700, color: '#9ca3af',
+                  textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 12,
+                }}>Theme</p>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {allThemes.map(t => {
+                    const isActive = (userThemes?.[currentUser] ?? ROLE_DEFAULTS[currentUser]) === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => { setUserTheme(t.id); setThemeOpen(false); }}
+                        title={t.name}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%',
+                          background: t.avatarBg,
+                          border: isActive ? '3px solid #1e1b4b' : '3px solid transparent',
+                          outline: isActive ? '2px solid var(--accent)' : '2px solid transparent',
+                          outlineOffset: 2,
+                          cursor: 'pointer', padding: 0,
+                          transition: 'transform 0.15s',
+                          flexShrink: 0,
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.15)'}
+                        onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                      />
+                    );
+                  })}
+                </div>
+                <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 10, lineHeight: 1.4 }}>
+                  Changes your avatar colour and page background.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Notification bell */}
           <div ref={bellRef} style={{ position: 'relative' }}>
             <button
               onClick={handleBellOpen}
-              style={{
-                position: 'relative', background: 'none', border: 'none',
-                cursor: 'pointer', padding: 6, borderRadius: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'background 0.12s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(124,58,237,0.06)'}
+              style={{ ...iconBtn, position: 'relative', color: bellOpen ? 'var(--accent)' : '#6b7280' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-a06)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                stroke={bellOpen ? '#7c3aed' : '#6b7280'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
@@ -265,32 +327,18 @@ export default function Header({ user, currentUser, setCurrentUser, notification
                   fontSize: 10, fontWeight: 700,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   border: '2px solid white',
-                }}>
-                  {unread > 9 ? '9+' : unread}
-                </span>
+                }}>{unread > 9 ? '9+' : unread}</span>
               )}
             </button>
 
             {bellOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                background: 'white', borderRadius: 14,
-                boxShadow: '0 8px 32px rgba(30,27,75,0.15), 0 2px 8px rgba(0,0,0,0.06)',
-                border: '1px solid rgba(124,58,237,0.12)',
-                minWidth: 300, maxWidth: 360,
-                zIndex: 200, overflow: 'hidden',
-              }}>
+              <div style={{ ...panel, right: 0, minWidth: 300, maxWidth: 360, overflow: 'hidden' }}>
                 <div style={{
                   padding: '12px 16px 8px',
                   borderBottom: '1px solid #f3f4f6',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>Notifications</span>
-                  {notifications.length > 0 && (
-                    <span style={{ fontSize: 11, color: '#7c3aed', fontWeight: 500 }}>
-                      {notifications.filter(n => !n.read).length > 0 ? 'All read' : ''}
-                    </span>
-                  )}
                 </div>
                 <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                   {notifications.length === 0 ? (

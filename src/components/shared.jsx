@@ -3,12 +3,12 @@ import { avatarColor } from '../data';
 
 // ─── Card style ───────────────────────────────────────────────────────────────
 export const card = {
-  background: 'rgba(255,255,255,0.88)',
+  background:    'var(--c-card)',
   backdropFilter: 'blur(10px)',
-  borderRadius: 16,
-  boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-  border: '1px solid rgba(255,255,255,0.9)',
-  padding: 18,
+  borderRadius:  16,
+  boxShadow:     'var(--c-card-sh)',
+  border:        '1px solid var(--c-card-bd)',
+  padding:       18,
 };
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
@@ -26,11 +26,11 @@ export function Avatar({ initials, size = 32, bg }) {
 }
 
 // ─── TabBar ───────────────────────────────────────────────────────────────────
-// tabs: [{ key, label, badge? }]  — badge shows a red count dot when > 0
 export function TabBar({ active, onChange, tabs }) {
   return (
     <div style={{
-      display: 'flex', gap: 3, background: '#f3f4f6',
+      display: 'flex', gap: 3,
+      background: 'var(--c-tab-track)',
       borderRadius: 14, padding: 4, marginBottom: 24, width: 'fit-content',
     }}>
       {tabs.map(t => (
@@ -39,12 +39,14 @@ export function TabBar({ active, onChange, tabs }) {
           onClick={() => onChange(t.key)}
           style={{
             padding: '9px 26px', borderRadius: 11, border: 'none',
-            background: active === t.key ? 'white' : 'transparent',
-            color: active === t.key ? '#1e1b4b' : '#9ca3af',
-            fontFamily: 'inherit', fontWeight: active === t.key ? 700 : 500,
+            background: active === t.key ? 'var(--c-tab-active)' : 'transparent',
+            color:      active === t.key ? 'var(--c-text-1)'   : 'var(--c-text-3)',
+            fontFamily: 'inherit',
+            fontWeight: active === t.key ? 700 : 500,
             fontSize: 13, cursor: 'pointer',
             boxShadow: active === t.key ? '0 1px 6px rgba(0,0,0,0.1)' : 'none',
-            transition: 'all 0.15s', display: 'flex', alignItems: 'center', gap: 7,
+            transition: 'all 0.15s',
+            display: 'flex', alignItems: 'center', gap: 7,
           }}
         >
           {t.label}
@@ -61,16 +63,14 @@ export function TabBar({ active, onChange, tabs }) {
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
-// Two variants:
-//   accent-border (HR KPIs): no bg prop → white card with left colour accent
-//   tinted (Team Lead KPIs): pass bg → coloured background, no accent border
 export function StatCard({ label, value, sub, color, bg }) {
   if (bg) {
     return (
       <div style={{
         background: bg, borderRadius: 16,
-        boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-        border: `1px solid ${color}22`, padding: '14px 16px',
+        boxShadow: 'var(--c-card-sh)',
+        border: `1px solid ${color}33`,
+        padding: '14px 16px',
       }}>
         <div style={{ fontSize: 26, fontWeight: 900, color, lineHeight: 1 }}>{value}</div>
         <div style={{ fontSize: 12, fontWeight: 800, color: '#1e1b4b', marginTop: 7 }}>{label}</div>
@@ -80,13 +80,14 @@ export function StatCard({ label, value, sub, color, bg }) {
   }
   return (
     <div style={{
-      background: 'rgba(255,255,255,0.88)', backdropFilter: 'blur(10px)',
-      borderRadius: 16,
-      boxShadow: '0 2px 20px rgba(109,40,217,0.07), 0 1px 4px rgba(0,0,0,0.04)',
-      borderTop: '1px solid rgba(255,255,255,0.9)',
-      borderRight: '1px solid rgba(255,255,255,0.9)',
-      borderBottom: '1px solid rgba(255,255,255,0.9)',
-      borderLeft: `3px solid ${color}`,
+      background:    'var(--c-card)',
+      backdropFilter: 'blur(10px)',
+      borderRadius:  16,
+      boxShadow:     'var(--c-card-sh)',
+      borderTop:    '1px solid var(--c-card-bd)',
+      borderRight:  '1px solid var(--c-card-bd)',
+      borderBottom: '1px solid var(--c-card-bd)',
+      borderLeft:   `3px solid ${color}`,
       padding: '16px 20px',
     }}>
       <div style={{ fontSize: 30, fontWeight: 900, color, lineHeight: 1, letterSpacing: '-0.5px' }}>{value}</div>
@@ -98,6 +99,8 @@ export function StatCard({ label, value, sub, color, bg }) {
 
 // ─── PageHeader ───────────────────────────────────────────────────────────────
 export function PageHeader({ name, subtitle }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   return (
     <div style={{ marginBottom: 20 }}>
       <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
@@ -107,7 +110,7 @@ export function PageHeader({ name, subtitle }) {
       </p>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-          Good morning, {name}
+          {greeting}, {name}
         </h1>
         {subtitle && (
           <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>{subtitle}</span>
@@ -118,7 +121,6 @@ export function PageHeader({ name, subtitle }) {
 }
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
-// RAG label badge — always shows text, not colour alone (accessibility)
 export function StatusBadge({ status }) {
   const styles = {
     Stable:   { bg: '#d1fae5', text: '#065f46' },
@@ -152,7 +154,6 @@ export function EmptyState({ title, message, color = '#059669', bg = '#f0fdf4', 
 }
 
 // ─── DashboardSection ─────────────────────────────────────────────────────────
-// A card wrapper with a consistent header row and optional collapsible toggle.
 export function DashboardSection({ title, subtitle, action, collapsible = false, defaultOpen = true, children, style }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -174,7 +175,8 @@ export function DashboardSection({ title, subtitle, action, collapsible = false,
               onClick={() => setOpen(o => !o)}
               style={{
                 background: 'none', border: 'none', cursor: 'pointer',
-                color: '#9ca3af', padding: 4, display: 'flex', alignItems: 'center',
+                color: '#9ca3af', padding: 4,
+                display: 'flex', alignItems: 'center',
                 borderRadius: 6, transition: 'background 0.12s',
               }}
               title={open ? 'Collapse' : 'Expand'}
