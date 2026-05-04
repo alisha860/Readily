@@ -1,4 +1,5 @@
-// Toast: fixed-position notification banner; auto-dismissed by App after 4 seconds
+// Colour and icon per message type so users can distinguish a success
+// confirmation from a warning or error at a glance.
 const STYLES = {
   success: { bg: '#f0fdf4', border: '#10b981', text: '#065f46', icon: '✓' },
   error:   { bg: '#fff1f2', border: '#ef4444', text: '#991b1b', icon: '✕' },
@@ -6,6 +7,8 @@ const STYLES = {
   warning: { bg: '#fffbeb', border: '#f59e0b', text: '#92400e', icon: '!' },
 };
 
+// Fixed notification overlay that confirms the result of user actions without
+// navigating away from the current dashboard view.
 export default function Toast({ message, type = 'info', onClose }) {
   const s = STYLES[type] || STYLES.info;
   return (

@@ -1,4 +1,7 @@
-// data.js: all static application data - users, HR metrics, team data, employee records, and site info
+// Three user personas let the application demonstrate the full workflow:
+// HR manages the organisation, the Team Lead monitors their team, and the
+// Employee reports their own absence. Switching between them simulates
+// how each role interacts with the same live data.
 export const USERS = {
   hr: {
     id: 'hr',
@@ -26,22 +29,31 @@ export const USERS = {
   },
 };
 
+// Centralised configuration for absence management. Grouping reasons by category
+// (health, disruption, standard) lets the UI apply appropriate urgency styling
+// and allows HR to filter and prioritise responses accordingly.
 export const DISRUPTION_CONFIG = {
   absenceReasons: [
-    { key: 'sickness',     label: 'Sickness',          category: 'health',    color: '#f97316' },
-    { key: 'annual_leave', label: 'Annual Leave',       category: 'standard',  color: '#16a34a' },
-    { key: 'dependent',    label: 'Dependent/Carer',    category: 'disruption',color: '#eab308' },
-    { key: 'personal',     label: 'Personal',           category: 'standard',  color: '#22c55e' },
-    { key: 'other',        label: 'Other',              category: 'standard',  color: '#6b7280' },
+    { key: 'confirmed_positive', label: 'Confirmed Positive', category: 'health', color: '#dc2626' },
+    { key: 'suspected', label: 'Suspected Illness', category: 'health', color: '#f97316' },
+    { key: 'quarantine', label: 'Quarantine/Isolation', category: 'health', color: '#ea580c' },
+    { key: 'exposure_isolation', label: 'Exposure (Precautionary)', category: 'health', color: '#fb923c' },
+    { key: 'caregiving', label: 'Caregiving (School/Family Closure)', category: 'disruption', color: '#eab308' },
+    { key: 'dependent_illness', label: 'Dependent Illness', category: 'disruption', color: '#84cc16' },
+    { key: 'personal_leave', label: 'Personal Leave', category: 'standard', color: '#22c55e' },
+    { key: 'annual_leave', label: 'Annual Leave', category: 'standard', color: '#16a34a' },
+    { key: 'other', label: 'Other', category: 'standard', color: '#6b7280' },
   ],
   
   healthStatus: {
-    healthy:     { label: 'Healthy',           color: '#10b981', icon: 'ok' },
-    symptomatic: { label: 'Symptomatic',       color: '#f97316', icon: '!'  },
-    confirmed:   { label: 'Confirmed Positive',color: '#dc2626', icon: 'x'  },
-    recovered:   { label: 'Recovered',         color: '#8b5cf6', icon: 'ok' },
+    healthy: { label: 'Healthy', color: '#10b981', icon: '✓' },
+    symptomatic: { label: 'Symptomatic', color: '#f97316', icon: '⚠️' },
+    confirmed: { label: 'Confirmed Positive', color: '#dc2626', icon: '🚫' },
+    recovered: { label: 'Recovered', color: '#8b5cf6', icon: '✓' },
   },
 
+  // Minimum staffing thresholds per criticality level. Higher-criticality roles
+  // require greater coverage so the system can alert HR before shortfalls occur.
   roleCriticality: {
     essential: { label: 'Essential (Minimum 90%)', threshold: 90, color: '#dc2626' },
     critical: { label: 'Critical (Minimum 70%)', threshold: 70, color: '#f59e0b' },
@@ -65,6 +77,7 @@ export const DISRUPTION_CONFIG = {
   ],
 };
 
+// Figures represent the current organisational snapshot that HR sees on login.
 export const HR_DATA = {
   staffStatus: {
     available: 80,
@@ -86,7 +99,7 @@ export const HR_DATA = {
     { name: 'Risk',       pct: 87, status: 'Stable',   color: '#10b981', current: 43, min: 35 },
     { name: 'Technology', pct: 94, status: 'Stable',   color: '#10b981', current: 47, min: 40 },
     { name: 'Wealth Mgmt',pct: 81, status: 'Stable',   color: '#10b981', current: 57, min: 50 },
-    { name: 'Operations', pct: 67, status: 'Warning',  color: '#f59e0b', current: 62, min: 60 },
+    { name: 'Operations', pct: 67, status: 'Warning',  color: '#f59e0b', current: 48, min: 60 },
     { name: 'Compliance', pct: 83, status: 'Critical', color: '#ef4444', current: 38, min: 45 },
   ],
   absenceTrendsByPeriod: {
@@ -115,8 +128,8 @@ export const HR_DATA = {
     { name: 'London', coords: [-0.1276, 51.5074], status: 'partial' },
     { name: 'New York', coords: [-74.006, 40.7128], status: 'open' },
     { name: 'Dubai', coords: [55.2708, 25.2048], status: 'open' },
-    { name: 'Mumbai', coords: [72.8777, 19.076], status: 'partial' },
-    { name: 'Hong Kong', coords: [114.1694, 22.3193], status: 'partial' },
+    { name: 'Mumbai', coords: [72.8777, 19.076], status: 'reduced' },
+    { name: 'Hong Kong', coords: [114.1694, 22.3193], status: 'reduced' },
     { name: 'Tokyo', coords: [139.6917, 35.6895], status: 'open' },
     { name: 'Sydney', coords: [151.2093, -33.8688], status: 'open' },
   ],
@@ -151,10 +164,13 @@ export const HR_DATA = {
   ],
 };
 
+// Team data used by the Team Lead dashboard. Each member has a status, location,
+// criticality, and weekly schedule so the lead can see at a glance who is in,
+// working remotely, or absent across all office locations.
 export const TEAM_LEAD_DATA = {
   team: [
     { id: 1, name: 'Georgia Knight', status: 'available', initials: 'GK', daysAbsent: null, location: 'London', desk: 'L-A1', role: 'FCA Sign-off Lead', criticality: 'essential', healthStatus: 'healthy', schedule: { Mon: 'office', Tue: 'office', Wed: 'wfh', Thu: 'office', Fri: 'office' } },
-    { id: 2, name: 'Adela Manon', status: 'absent', initials: 'AM', daysAbsent: 14, reason: 'Sickness', absenceCategory: 'health', healthStatus: 'recovered', expectedReturn: 'Tomorrow', location: 'London', desk: null, role: 'Operations Controller', criticality: 'standard', schedule: { Mon: 'absent', Tue: 'absent', Wed: 'office', Thu: 'office', Fri: 'wfh' } },
+    { id: 2, name: 'Adela Manon', status: 'absent', initials: 'AM', daysAbsent: 14, reason: 'Quarantine/Isolation', absenceCategory: 'health', healthStatus: 'recovered', expectedReturn: 'Tomorrow', location: 'London', desk: null, role: 'Operations Controller', criticality: 'standard', schedule: { Mon: 'absent', Tue: 'absent', Wed: 'office', Thu: 'office', Fri: 'wfh' } },
     { id: 3, name: 'Theo James', status: 'available', initials: 'TJ', daysAbsent: null, location: 'London', desk: 'L-B4', role: 'Client Advisor', criticality: 'standard', healthStatus: 'healthy', schedule: { Mon: 'office', Tue: 'office', Wed: 'office', Thu: 'wfh', Fri: 'office' } },
     { id: 4, name: 'Jason Statham', status: 'available', initials: 'JS', daysAbsent: null, location: 'London', desk: 'L-D4', role: 'Desk Support', criticality: 'standard', healthStatus: 'healthy', schedule: { Mon: 'wfh', Tue: 'office', Wed: 'office', Thu: 'office', Fri: 'leave' } },
     { id: 5, name: 'Emma Watson', status: 'available', initials: 'EW', daysAbsent: null, location: 'London', desk: 'L-A6', role: 'Continuity Deputy', criticality: 'critical', healthStatus: 'healthy', schedule: { Mon: 'office', Tue: 'office', Wed: 'wfh', Thu: 'office', Fri: 'office' } },
@@ -216,20 +232,22 @@ export const TEAM_LEAD_DATA = {
   },
 };
 
+// Data scoped to the employee's own view: their announcements, team status,
+// absence history, desk layout, and escalation contacts for when they need help.
 export const EMPLOYEE_DATA = {
   announcements: [
-    { id: 1, type: 'alert',   icon: '!', text: 'London HQ: floor 3 is closed for maintenance today. Please use floors 1 and 2.' },
-    { id: 2, type: 'warning', icon: '!', text: 'Team absence is above threshold today. Ensure your status is up to date.' },
-    { id: 3, type: 'info',    icon: 'i', text: 'Theo James has reported absent today (Sickness).' },
-    { id: 4, type: 'info',    icon: 'i', text: 'Emma Watson has reported absent today (Dependent Illness).' },
-    { id: 5, type: 'info',    icon: 'i', text: 'Reminder: all WFH days must be logged before 9am.' },
-    { id: 6, type: 'success', icon: 'i', text: 'Staffing situation in Operations has been resolved.' },
+    { id: 1, type: 'alert', icon: '🏢', text: 'CQ-HQ — Your site is closed.' },
+    { id: 2, type: 'info', icon: '👤', text: 'Alisha Ahmad is absent.' },
+    { id: 3, type: 'warning', icon: '⚠️', text: 'Absence levels exceeded threshold.' },
+    { id: 4, type: 'success', icon: '✓', text: 'Your absence request was submitted.' },
+    { id: 5, type: 'info', icon: '👤', text: 'Eugenia Agbukor is absent.' },
+    { id: 6, type: 'info', icon: '👤', text: 'Srivani Pittala is absent.' },
   ],
   myAbsences: [
-    { date: '14/04/2026', duration: 13, reason: 'Sickness' },
-    { date: '11/03/2026', duration: 4,  reason: 'Other' },
-    { date: '08/02/2026', duration: 3,  reason: 'Sickness' },
-    { date: '03/01/2026', duration: 17, reason: 'Sickness' },
+    { date: '12/02/2025', duration: 13, reason: 'Sickness' },
+    { date: '02/01/2025', duration: 17, reason: 'Covid' },
+    { date: '21/11/2024', duration: 3, reason: 'Other' },
+    { date: '17/06/2024', duration: 4, reason: 'Sickness' },
   ],
   myTeam: [
     { id: 1, name: 'Georgia Knight', status: 'available', initials: 'GK' },
@@ -298,8 +316,8 @@ export const EMPLOYEE_DATA = {
     ],
   },
   monthlyAbsence: [
-    { month: 'Jan', days: 17 }, { month: 'Feb', days: 3 },
-    { month: 'Mar', days: 4 },  { month: 'Apr', days: 13 },
+    { month: 'Jan', days: 17 }, { month: 'Feb', days: 13 },
+    { month: 'Mar', days: 4 },  { month: 'Apr', days: 3 },
     { month: 'May', days: 0 },  { month: 'Jun', days: 0 },
     { month: 'Jul', days: 0 },  { month: 'Aug', days: 0 },
     { month: 'Sep', days: 0 },  { month: 'Oct', days: 0 },
@@ -312,9 +330,8 @@ export const AVATAR_COLORS = [
   '#d97706', '#dc2626', '#2563eb', '#7c3aed',
 ];
 
-// avatarColor hashes the initials string to a colour index so the same person always gets
-// the same colour. Using charCode sum is simple and deterministic - the same initials will
-// always produce the same hash, so avatars look consistent across every re-render and page load.
+// Deterministic hash ensures the same initials always resolve to the same colour,
+// so avatars remain visually consistent across re-renders and role switches.
 export function avatarColor(str) {
   const hash = [...str].reduce((a, c) => a + c.charCodeAt(0), 0);
   return AVATAR_COLORS[hash % AVATAR_COLORS.length];
@@ -323,5 +340,6 @@ export function avatarColor(str) {
 export const SITE_STATUS_COLORS = {
   open: '#10b981',
   partial: '#f59e0b',
+  reduced: '#6366f1',
   closed: '#ef4444',
 };

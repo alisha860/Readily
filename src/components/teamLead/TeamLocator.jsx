@@ -1,6 +1,5 @@
-// TeamLocator: weekly schedule grid showing each team member's location per day, filterable by site
 import { useMemo, useState } from 'react';
-import { card, Avatar } from '../shared';
+import { card, Avatar } from './shared';
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 const STATUS_META = {
@@ -28,9 +27,8 @@ function StatusPill({ label, color, bg }) {
   );
 }
 
-// getScheduleStatus falls back to the member's current live status when no schedule entry
-// exists for a given day. This handles weekend or future days gracefully, rather than
-// showing a blank cell, we show their known status as a best approximation.
+// Falls back to the member's live status when no scheduled entry exists,
+// so newly absent or WFH members display correctly in the weekly grid.
 function getScheduleStatus(member, day) {
   if (member.schedule?.[day]) return member.schedule[day];
   if (member.status === 'wfh') return 'wfh';
@@ -39,6 +37,8 @@ function getScheduleStatus(member, day) {
 }
 
 export default function TeamLocator({ team = [] }) {
+  // Derives the location filter options from the team data so the list always
+  // reflects whichever offices are actually represented in the current team.
   const locations = useMemo(() => (
     ['All', ...Array.from(new Set(team.map(member => member.location).filter(Boolean)))]
   ), [team]);
