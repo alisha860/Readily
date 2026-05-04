@@ -1,46 +1,66 @@
-import { useState, useCallback } from 'react';
+// App: root component that owns all cross-role state (absences, escalations, notifications, announcements)
+import { useState, useCallback, useEffect } from 'react';
 import Header from './components/Header';
-import HRDashboard from './components/HRDashboard';
-import TeamLeadDashboard from './components/TeamLeadDashboard';
-import EmployeeDashboard from './components/EmployeeDashboard';
+import HRDashboard from './components/hr/HRDashboard';
+import TeamLeadDashboard from './components/teamLead/TeamLeadDashboard';
+import EmployeeDashboard from './components/employee/EmployeeDashboard';
 import Toast from './components/Toast';
-import AccessibilityToolbar from './components/AccessibilityToolbar';
-import { AccessibilityProvider } from './AccessibilityContext';
 import { USERS, EMPLOYEE_DATA } from './data';
+import { THEMES, ROLE_DEFAULTS, getTheme } from './themes';
 
-// State is lifted to App so that actions by one role (e.g. an employee reporting
-// absence) are immediately visible in other roles' dashboards without a data fetch.
 export default function App() {
   const [currentUser, setCurrentUser] = useState('hr');
   const [toast, setToast] = useState(null);
+  const [userThemes, setUserThemes] = useState({ ...ROLE_DEFAULTS });
 
   const [employeeAbsences, setEmployeeAbsences] = useState(EMPLOYEE_DATA.myAbsences);
   const [employeeAbsent, setEmployeeAbsent] = useState(false);
   const [employeeWFH, setEmployeeWFH] = useState(false);
+  const [employeeExpectedReturn, setEmployeeExpectedReturn] = useState(null);
+  const [employeeHandover, setEmployeeHandover] = useState('');
 
-  const [notificationsByUser, setNotificationsByUser] = useState({
-    hr: [],
-    teamlead: [],
-    employee: [],
-  });
+  // Escalations and announcements live here rather than inside individual dashboards because
+  // they are cross-role: when Melissa raises an escalation, Alex (HR) must see it immediately,
+  // and when Alex sends an announcement, Simone's (Employee) feed must update. Lifting this
+  // state to App is the simplest way to share it without a global state library.
+  const [notificationsByUser, setNotificationsByUser] = useState({ hr: [], teamlead: [], employee: [] });
   const [escalations, setEscalations] = useState([]);
-
-  // Announcements pushed by HR that appear in Employee's feed
   const [staffAnnouncements, setStaffAnnouncements] = useState([]);
 
-  // Shows a brief feedback message after user actions; auto-dismisses after 4s.
+  // Apply theme CSS variables whenever the active user or their chosen theme changes.
+  // CSS custom properties are used so every component in the tree picks up the new accent
+  // colour without needing to receive it as a prop.
+  useEffect(() => {
+    const t = getTheme(userThemes[currentUser]);
+    const el = document.documentElement;
+    el.style.setProperty('--accent', t.accent);
+    el.style.setProperty('--accent-a04', `rgba(${t.accentRgb},0.04)`);
+    el.style.setProperty('--accent-a06', `rgba(${t.accentRgb},0.06)`);
+    el.style.setProperty('--accent-a08', `rgba(${t.accentRgb},0.08)`);
+    el.style.setProperty('--accent-a10', `rgba(${t.accentRgb},0.10)`);
+    el.style.setProperty('--accent-a12', `rgba(${t.accentRgb},0.12)`);
+    el.style.setProperty('--accent-a20', `rgba(${t.accentRgb},0.20)`);
+    document.body.style.background = t.gradient;
+  }, [currentUser, userThemes]);
+
+  // useCallback is used on all handlers so their references stay stable across re-renders.
+  // Without it, passing them as props would cause child dashboards to re-render on every
+  // toast state change or unrelated state update; useCallback prevents that.
+  const setUserTheme = useCallback((themeId) => {
+    setUserThemes(prev => ({ ...prev, [currentUser]: themeId }));
+  }, [currentUser]);
+
   const showToast = useCallback((message, type = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // Routes a notification to a specific role's inbox, enabling cross-role alerts
-  // (e.g. absence submission automatically notifying the team lead).
   const addNotification = useCallback((recipient, message, type = 'info') => {
     setNotificationsByUser(prev => ({
       ...prev,
       [recipient]: [
         { id: Date.now() + Math.random(), message, type, time: new Date(), read: false },
+        // Cap at 10 notifications per user so the bell panel doesn't grow indefinitely.
         ...(prev[recipient] || []).slice(0, 9),
       ],
     }));
@@ -53,17 +73,10 @@ export default function App() {
     }));
   }, [currentUser]);
 
-  // Creates a formal escalation from the team lead to HR, visible in the HR
-  // dashboard until resolved.
   const createEscalation = useCallback(({ targetName, notes, absencePct }) => {
     const escalation = {
-      id: Date.now(),
-      targetName,
-      notes,
-      absencePct,
-      status: 'open',
-      raisedBy: 'Melissa',
-      createdAt: new Date(),
+      id: Date.now(), targetName, notes, absencePct,
+      status: 'open', raisedBy: 'Melissa', createdAt: new Date(),
     };
     setEscalations(prev => [escalation, ...prev]);
     addNotification(
@@ -76,7 +89,6 @@ export default function App() {
     return escalation;
   }, [addNotification]);
 
-  // Marks an escalation as resolved and notifies the team lead of the outcome.
   const resolveEscalation = useCallback((id) => {
     setEscalations(prev => prev.map(e => (
       e.id === id ? { ...e, status: 'resolved', resolvedAt: new Date() } : e
@@ -84,41 +96,46 @@ export default function App() {
     addNotification('teamlead', 'HR resolved your escalation', 'success');
   }, [addNotification]);
 
-  // Lets HR broadcast an announcement that appears in every employee's feed.
   const pushStaffAnnouncement = useCallback((text, type = 'info', icon = '📢') => {
-    setStaffAnnouncements(prev => [
-      { id: Date.now(), type, icon, text },
-      ...prev,
-    ]);
+    setStaffAnnouncements(prev => [{ id: Date.now(), type, icon, text }, ...prev]);
   }, []);
 
-  // Records the employee's absence and notifies the team lead in real time.
-  const handleAbsenceSubmit = useCallback(({ reason, duration, date }) => {
+  const handleAbsenceSubmit = useCallback(({ reason, duration, date, handover }) => {
     setEmployeeAbsences(prev => [{ date, duration, reason }, ...prev]);
     setEmployeeAbsent(true);
     setEmployeeWFH(false);
+    setEmployeeHandover(handover || '');
+    // Parse the expected-return date from the duration string (e.g. "3 Days", "1 week")
+    // so we can show it on the Team Lead dashboard without the employee having to enter a date.
+    const m1 = String(duration).match(/^(\d+) day/);
+    const m2 = String(duration).match(/^(\d+) week/);
+    const days = m1 ? +m1[1] : m2 ? +m2[1] * 7 : typeof duration === 'number' ? duration : null;
+    if (days) {
+      const d = new Date(); d.setDate(d.getDate() + days);
+      setEmployeeExpectedReturn(d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }));
+    }
     addNotification('teamlead', `Simone reported absent (${reason})`, 'warning');
   }, [addNotification]);
 
-  // Removes an absence record and notifies the team lead that it was withdrawn.
   const handleCancelAbsence = useCallback((index) => {
     setEmployeeAbsences(prev => prev.filter((_, i) => i !== index));
-    if (index === 0) setEmployeeAbsent(false);
+    // Only clear the live absent flag if the first (most recent) record is being withdrawn,
+    // because that is the one that set employeeAbsent to true. Removing an older record
+    // should not affect today's status.
+    if (index === 0) { setEmployeeAbsent(false); setEmployeeExpectedReturn(null); setEmployeeHandover(''); }
     addNotification('teamlead', 'Simone cancelled an absence report', 'info');
   }, [addNotification]);
 
-  // Logs the employee as working from home and updates the team lead's view.
   const handleWFHSubmit = useCallback(() => {
     setEmployeeWFH(true);
     setEmployeeAbsent(false);
     addNotification('teamlead', 'Simone is working from home today', 'info');
   }, [addNotification]);
 
-  const user = USERS[currentUser];
+  const currentTheme = getTheme(userThemes[currentUser]);
+  const user = { ...USERS[currentUser], avatarBg: currentTheme.avatarBg };
 
   return (
-    // Provider wraps the entire app so all dashboards and the toolbar share one accessibility state.
-    <AccessibilityProvider>
     <div style={{ minHeight: '100vh' }}>
       <Header
         user={user}
@@ -126,6 +143,9 @@ export default function App() {
         setCurrentUser={setCurrentUser}
         notifications={notificationsByUser[currentUser] || []}
         markNotificationsRead={markNotificationsRead}
+        userThemes={userThemes}
+        setUserTheme={setUserTheme}
+        allThemes={THEMES}
       />
       <main style={{ padding: '24px 28px', maxWidth: 1600, margin: '0 auto' }}>
         {currentUser === 'hr' && (
@@ -148,6 +168,8 @@ export default function App() {
             showToast={showToast}
             employeeAbsent={employeeAbsent}
             employeeWFH={employeeWFH}
+            employeeExpectedReturn={employeeExpectedReturn}
+            employeeHandover={employeeHandover}
             addNotification={addNotification}
             createEscalation={createEscalation}
           />
@@ -170,10 +192,6 @@ export default function App() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
-      {/* Floating accessibility toolbar — rendered outside main so it stays
-          fixed regardless of which dashboard tab or role is active */}
-      <AccessibilityToolbar />
     </div>
-    </AccessibilityProvider>
   );
 }
