@@ -9,7 +9,7 @@ import AnalyseTab  from './tabs/AnalyseTab';
 import ReportsTab  from './tabs/ReportsTab';
 
 const PIE_COLORS = {
-  inOffice: '#10b981',
+  inOffice: '#7c3aed',
   wfh:      '#6366f1',
   absent:   '#f472b6',
   onLeave:  '#a5b4fc',

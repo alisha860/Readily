@@ -61,7 +61,7 @@ function OrgSnapshotTable({ data }) {
             return (
               <tr key={d.dept} style={{ borderBottom: '1px solid #f9fafb', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
                 <td style={{ padding: '10px', fontWeight: 700, color: '#1e1b4b' }}>{d.dept}</td>
-                <td style={{ padding: '10px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>{d.inOffice}</td>
+                <td style={{ padding: '10px', textAlign: 'right', color: '#7c3aed', fontWeight: 600 }}>{d.inOffice}</td>
                 <td style={{ padding: '10px', textAlign: 'right', color: '#6366f1', fontWeight: 600 }}>{d.wfh}</td>
                 <td style={{ padding: '10px', textAlign: 'right', color: '#f472b6', fontWeight: 600 }}>{d.absent}</td>
                 <td style={{ padding: '10px', textAlign: 'right', color: '#a5b4fc', fontWeight: 600 }}>{d.onLeave}</td>
@@ -123,7 +123,7 @@ export default function AnalyseTab({
                 <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 8 }}>drill-down</span>
               </div>
               {[
-                { label: 'In Office', value: drillDept.inOffice, color: '#10b981' },
+                { label: 'In Office', value: drillDept.inOffice, color: '#7c3aed' },
                 { label: 'WFH',       value: drillDept.wfh,     color: '#6366f1' },
                 { label: 'Absent',    value: drillDept.absent,   color: '#f472b6' },
                 { label: 'On Leave',  value: drillDept.onLeave,  color: '#a5b4fc' },
@@ -162,7 +162,7 @@ export default function AnalyseTab({
               <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 10 }} />
-              <Bar dataKey="inOffice" name="In Office" fill="#10b981" radius={[3,3,0,0]} />
+              <Bar dataKey="inOffice" name="In Office" fill="#7c3aed" radius={[3,3,0,0]} />
               <Bar dataKey="wfh"      name="WFH"       fill="#6366f1" radius={[3,3,0,0]} />
               <Bar dataKey="absent"   name="Absent"    fill="#f472b6" radius={[3,3,0,0]} />
               <Bar dataKey="onLeave"  name="On Leave"  fill="#a5b4fc" radius={[3,3,0,0]} />
@@ -227,7 +227,7 @@ export default function AnalyseTab({
                 <XAxis type="number" tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
                 <YAxis dataKey="label" type="category" tick={{ fontSize: 11, fill: '#374151', fontWeight: 600 }} axisLine={false} tickLine={false} width={62} />
                 <Tooltip formatter={v => [`${v} staff`, 'Returning']} contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
-                <Bar dataKey="returning" name="Returning" fill="#10b981" radius={[0,4,4,0]} />
+                <Bar dataKey="returning" name="Returning" fill="#7c3aed" radius={[0,4,4,0]} />
               </BarChart>
             </ResponsiveContainer>
             <div style={{ marginTop: 10, padding: '8px 12px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #bbf7d0' }}>
@@ -308,7 +308,7 @@ export default function AnalyseTab({
             <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
             <Legend wrapperStyle={{ fontSize: 10 }} />
-            <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#10b981" />
+            <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#7c3aed" />
             <Bar dataKey="wfh"      name="WFH"       stackId="a" fill="#6366f1" />
             <Bar dataKey="absent"   name="Absent"    stackId="a" fill="#f472b6" />
             <Bar dataKey="onLeave"  name="On Leave"  stackId="a" fill="#a5b4fc" radius={[3,3,0,0]} />
