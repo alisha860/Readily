@@ -5,6 +5,8 @@ import HRDashboard from './components/hr/HRDashboard';
 import TeamLeadDashboard from './components/teamLead/TeamLeadDashboard';
 import EmployeeDashboard from './components/employee/EmployeeDashboard';
 import Toast from './components/Toast';
+import AccessibilityToolbar from './components/AccessibilityToolbar';
+import { AccessibilityProvider } from './AccessibilityContext';
 import { USERS, EMPLOYEE_DATA } from './data';
 import { THEMES, ROLE_DEFAULTS, getTheme } from './themes';
 
@@ -136,6 +138,7 @@ export default function App() {
   const user = { ...USERS[currentUser], avatarBg: currentTheme.avatarBg };
 
   return (
+    <AccessibilityProvider>
     <div style={{ minHeight: '100vh' }}>
       <Header
         user={user}
@@ -192,6 +195,8 @@ export default function App() {
       {toast && (
         <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
       )}
+      <AccessibilityToolbar />
     </div>
+    </AccessibilityProvider>
   );
 }

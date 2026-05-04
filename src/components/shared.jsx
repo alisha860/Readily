@@ -1,5 +1,6 @@
 // shared.jsx: reusable UI components used across all three dashboard roles
 import { useState } from 'react';
+import { useAccessibility } from '../AccessibilityContext';
 import { avatarColor } from '../data';
 
 // card is a plain style object rather than a wrapper component so it can be spread with custom
@@ -119,12 +120,17 @@ export function PageHeader({ name }) {
   );
 }
 
+// Shape symbols provide a non-colour cue alongside the RAG colour per WCAG 1.4.1.
+const STATUS_SHAPES = { Stable: '●', Warning: '▲', Critical: '■', Monitor: '●' };
+
+// Colours read from the active palette so the badge adapts in colourblind mode.
 export function StatusBadge({ status }) {
+  const { palette } = useAccessibility();
   const styles = {
-    Stable:   { bg: '#d1fae5', text: '#065f46' },
-    Warning:  { bg: '#fef3c7', text: '#92400e' },
-    Critical: { bg: '#fee2e2', text: '#991b1b' },
-    Monitor:  { bg: '#dbeafe', text: '#1e40af' },
+    Stable:   { bg: palette.stableBg,   text: palette.stableText   },
+    Warning:  { bg: '#fef3c7',           text: '#92400e'             },
+    Critical: { bg: palette.criticalBg, text: palette.criticalText },
+    Monitor:  { bg: '#dbeafe',           text: '#1e40af'             },
   };
   const s = styles[status] || styles.Monitor;
   return (
@@ -132,7 +138,7 @@ export function StatusBadge({ status }) {
       background: s.bg, color: s.text,
       fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
     }}>
-      {status}
+      {STATUS_SHAPES[status] || '●'} {status}
     </span>
   );
 }
