@@ -1,5 +1,5 @@
+// Header: top navigation bar with user switcher, notifications bell, theme picker, and help guide
 import { useState, useRef, useEffect } from 'react';
-import { USERS } from '../data';
 import { ROLE_DEFAULTS, getTheme } from '../themes';
 import { Avatar } from './shared';
 
@@ -45,26 +45,40 @@ const iconBtn = {
   transition: 'background 0.12s, color 0.12s',
 };
 
+const panel = {
+  position: 'absolute', top: 'calc(100% + 8px)',
+  background: 'var(--c-surface)',
+  borderRadius: 14,
+  boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06)',
+  border: '1px solid var(--accent-a12)',
+  zIndex: 200,
+};
+
 export default function Header({
   user, currentUser, setCurrentUser,
   notifications = [], markNotificationsRead,
   userThemes, setUserTheme, allThemes,
 }) {
-  const [open,      setOpen]      = useState(false);
-  const [bellOpen,  setBellOpen]  = useState(false);
-  const [helpOpen,  setHelpOpen]  = useState(false);
+  const [open, setOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
 
-  const ref      = useRef(null);
-  const bellRef  = useRef(null);
-  const helpRef  = useRef(null);
+  // Each popover gets its own ref so the click-outside handler can tell which panel was clicked.
+  // A single shared ref would close the wrong panel when multiple popovers exist on the same row.
+  const ref = useRef(null);
+  const bellRef = useRef(null);
+  const helpRef = useRef(null);
   const themeRef = useRef(null);
 
+  // Attach a single mousedown listener to the document rather than one per popover.
+  // contains() checks whether the click originated inside the panel; if not, close it.
+  // The listener is removed on unmount via the useEffect cleanup to avoid memory leaks.
   useEffect(() => {
     function handleClick(e) {
-      if (ref.current      && !ref.current.contains(e.target))      setOpen(false);
-      if (bellRef.current  && !bellRef.current.contains(e.target))  setBellOpen(false);
-      if (helpRef.current  && !helpRef.current.contains(e.target))  setHelpOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (bellRef.current && !bellRef.current.contains(e.target)) setBellOpen(false);
+      if (helpRef.current && !helpRef.current.contains(e.target)) setHelpOpen(false);
       if (themeRef.current && !themeRef.current.contains(e.target)) setThemeOpen(false);
     }
     document.addEventListener('mousedown', handleClick);
@@ -74,19 +88,12 @@ export default function Header({
   const unread = notifications.filter(n => !n.read).length;
   const currentEntry = USER_LIST.find(u => u.id === currentUser);
 
+  // Mark notifications as read as soon as the bell is opened, not when it closes.
+  // This matches the expected behaviour: once seen, the unread badge should clear immediately.
   function handleBellOpen() {
     setBellOpen(o => !o);
     if (!bellOpen && unread > 0) markNotificationsRead?.();
   }
-
-  const panel = {
-    position: 'absolute', top: 'calc(100% + 8px)',
-    background: 'var(--c-surface)',
-    borderRadius: 14,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.06)',
-    border: '1px solid var(--accent-a12)',
-    zIndex: 200,
-  };
 
   return (
     <header style={{
@@ -101,11 +108,9 @@ export default function Header({
         maxWidth: 1600, margin: '0 auto',
       }}>
 
-        {/* Logo */}
         <img src="/image.png" alt="Readily"
           style={{ height: 36, objectFit: 'contain', userSelect: 'none' }} />
 
-        {/* User selector */}
         <div ref={ref} style={{ position: 'relative' }}>
           <button
             onClick={() => setOpen(o => !o)}
@@ -183,10 +188,7 @@ export default function Header({
           )}
         </div>
 
-        {/* Right nav */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-
-          {/* Help */}
           <div ref={helpRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setHelpOpen(o => !o)}
@@ -194,29 +196,25 @@ export default function Header({
               onMouseEnter={e => e.currentTarget.style.background = 'var(--accent-a06)'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
-              help
+              Help
             </button>
             {helpOpen && (
               <div style={{ ...panel, right: -70, width: 280, padding: 16 }}>
                 <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 12 }}>Quick Guide</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {[
-                    { id: 'hr',       icon: '👩‍💼', title: 'HR Manager', items: [
-                      'Overview — KPIs, risk alerts, department coverage',
-                      'Deploy reserve staff to understaffed departments',
-                      'Alert Staff — push announcements to all employees',
-                      'Analyse — absence trends, site map, workforce split',
-                      'Reports — configure and download workforce reports',
+                    { id: 'hr', title: 'HR Manager', items: [
+                      'Overview: readiness score, risk alerts, department coverage',
+                      'Analyse: absence trends, world map, return forecast',
+                      'Reports: download workforce reports as PDF, CSV or Excel',
                     ]},
-                    { id: 'teamlead', icon: '👤', title: 'Team Lead', items: [
-                      'My Team — absences, critical roles, weekly schedule',
-                      'Escalate to HR when thresholds are breached',
-                      'Analytics — absence rate, team comparison, trends',
+                    { id: 'teamlead', title: 'Team Lead', items: [
+                      'My Team: today\'s focus, absences, critical roles, weekly schedule',
+                      'Analytics: absence rate, threshold, team comparison, trends',
                     ]},
-                    { id: 'employee', icon: '🙋', title: 'Employee', items: [
-                      'Today — report absence or log WFH; manager notified',
-                      'Site Overview — current bay and desk availability',
-                      'My Record — allowance, history, contacts',
+                    { id: 'employee', title: 'Employee', items: [
+                      'Today: confirm your status, report absence or WFH',
+                      'My Record: absence history, allowance, escalation contacts',
                     ]},
                   ].map(role => {
                     const isActive = currentUser === role.id;
@@ -227,7 +225,6 @@ export default function Header({
                         border: `1px solid ${isActive ? 'var(--accent-a20)' : 'transparent'}`,
                       }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-                          <span style={{ fontSize: 13 }}>{role.icon}</span>
                           <span style={{ fontSize: 11, fontWeight: 800, color: isActive ? 'var(--accent)' : '#374151' }}>{role.title}</span>
                           {isActive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--accent)', background: 'var(--accent-a10)', padding: '1px 6px', borderRadius: 10 }}>You</span>}
                         </div>
@@ -253,7 +250,6 @@ export default function Header({
             )}
           </div>
 
-          {/* Theme picker */}
           <div ref={themeRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setThemeOpen(o => !o)}
@@ -306,7 +302,6 @@ export default function Header({
             )}
           </div>
 
-          {/* Notification bell */}
           <div ref={bellRef} style={{ position: 'relative' }}>
             <button
               onClick={handleBellOpen}

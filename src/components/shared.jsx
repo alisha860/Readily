@@ -1,17 +1,21 @@
+// shared.jsx: reusable UI components used across all three dashboard roles
 import { useState } from 'react';
 import { avatarColor } from '../data';
 
-// ─── Card style ───────────────────────────────────────────────────────────────
+// card is a plain style object rather than a wrapper component so it can be spread with custom
+// overrides using the JS spread operator: { ...card, marginBottom: 14, background: '#fff1f2' }.
+// A component wrapper would require extra props for every override, which gets verbose quickly.
 export const card = {
-  background:    'var(--c-card)',
+  background: 'var(--c-card)',
   backdropFilter: 'blur(10px)',
-  borderRadius:  16,
-  boxShadow:     'var(--c-card-sh)',
-  border:        '1px solid var(--c-card-bd)',
-  padding:       18,
+  borderRadius: 16,
+  boxShadow: 'var(--c-card-sh)',
+  border: '1px solid var(--c-card-bd)',
+  padding: 18,
 };
 
-// ─── Avatar ───────────────────────────────────────────────────────────────────
+// Avatar derives its colour from the initials string using avatarColor(), so the same person
+// always gets the same colour across every part of the UI: consistent identity cues.
 export function Avatar({ initials, size = 32, bg }) {
   return (
     <div style={{
@@ -25,7 +29,6 @@ export function Avatar({ initials, size = 32, bg }) {
   );
 }
 
-// ─── TabBar ───────────────────────────────────────────────────────────────────
 export function TabBar({ active, onChange, tabs }) {
   return (
     <div style={{
@@ -40,7 +43,7 @@ export function TabBar({ active, onChange, tabs }) {
           style={{
             padding: '9px 26px', borderRadius: 11, border: 'none',
             background: active === t.key ? 'var(--c-tab-active)' : 'transparent',
-            color:      active === t.key ? 'var(--c-text-1)'   : 'var(--c-text-3)',
+            color: active === t.key ? 'var(--c-text-1)' : 'var(--c-text-3)',
             fontFamily: 'inherit',
             fontWeight: active === t.key ? 700 : 500,
             fontSize: 13, cursor: 'pointer',
@@ -62,7 +65,7 @@ export function TabBar({ active, onChange, tabs }) {
   );
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
+// two visual styles: pass bg for the tinted variant (team lead KPIs), omit for the bordered variant (HR KPIs)
 export function StatCard({ label, value, sub, color, bg }) {
   if (bg) {
     return (
@@ -80,14 +83,14 @@ export function StatCard({ label, value, sub, color, bg }) {
   }
   return (
     <div style={{
-      background:    'var(--c-card)',
+      background: 'var(--c-card)',
       backdropFilter: 'blur(10px)',
-      borderRadius:  16,
-      boxShadow:     'var(--c-card-sh)',
-      borderTop:    '1px solid var(--c-card-bd)',
-      borderRight:  '1px solid var(--c-card-bd)',
+      borderRadius: 16,
+      boxShadow: 'var(--c-card-sh)',
+      borderTop: '1px solid var(--c-card-bd)',
+      borderRight: '1px solid var(--c-card-bd)',
       borderBottom: '1px solid var(--c-card-bd)',
-      borderLeft:   `3px solid ${color}`,
+      borderLeft: `3px solid ${color}`,
       padding: '16px 20px',
     }}>
       <div style={{ fontSize: 30, fontWeight: 900, color, lineHeight: 1, letterSpacing: '-0.5px' }}>{value}</div>
@@ -97,10 +100,10 @@ export function StatCard({ label, value, sub, color, bg }) {
   );
 }
 
-// ─── PageHeader ───────────────────────────────────────────────────────────────
-export function PageHeader({ name, subtitle }) {
+export function PageHeader({ name }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (
     <div style={{ marginBottom: 20 }}>
       <p style={{ fontSize: 13, color: '#9ca3af', fontWeight: 500 }}>
@@ -108,19 +111,14 @@ export function PageHeader({ name, subtitle }) {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
         })}
       </p>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
-          {greeting}, {name}
-        </h1>
-        {subtitle && (
-          <span style={{ fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>{subtitle}</span>
-        )}
-      </div>
+      <h1 style={{ fontSize: 26, fontWeight: 800, color: '#1e1b4b', letterSpacing: '-0.5px' }}>
+        {greeting}, {name}
+      </h1>
+      <span style={{ fontSize: 10, color: '#9ca3af', fontWeight: 500 }}>Updated {time}</span>
     </div>
   );
 }
 
-// ─── StatusBadge ──────────────────────────────────────────────────────────────
 export function StatusBadge({ status }) {
   const styles = {
     Stable:   { bg: '#d1fae5', text: '#065f46' },
@@ -139,7 +137,6 @@ export function StatusBadge({ status }) {
   );
 }
 
-// ─── EmptyState ───────────────────────────────────────────────────────────────
 export function EmptyState({ title, message, color = '#059669', bg = '#f0fdf4', border = '#bbf7d0' }) {
   return (
     <div style={{
@@ -153,7 +150,10 @@ export function EmptyState({ title, message, color = '#059669', bg = '#f0fdf4', 
   );
 }
 
-// ─── DashboardSection ─────────────────────────────────────────────────────────
+// DashboardSection is a collapsible card wrapper. The chevron rotates with a CSS transform
+// rather than swapping between two icons, which avoids a layout shift on toggle and is one
+// less thing to keep in sync with state. defaultOpen lets callers decide whether a section
+// should start expanded (e.g. Absences when someone is actually absent) or collapsed.
 export function DashboardSection({ title, subtitle, action, collapsible = false, defaultOpen = true, children, style }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
@@ -179,7 +179,6 @@ export function DashboardSection({ title, subtitle, action, collapsible = false,
                 display: 'flex', alignItems: 'center',
                 borderRadius: 6, transition: 'background 0.12s',
               }}
-              title={open ? 'Collapse' : 'Expand'}
               onMouseEnter={e => e.currentTarget.style.background = '#f3f4f6'}
               onMouseLeave={e => e.currentTarget.style.background = 'none'}
             >
@@ -197,7 +196,6 @@ export function DashboardSection({ title, subtitle, action, collapsible = false,
   );
 }
 
-// ─── LastUpdated ──────────────────────────────────────────────────────────────
 export function LastUpdated() {
   const time = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   return (

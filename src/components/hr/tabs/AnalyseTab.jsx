@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
   LineChart, Line, ReferenceLine, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import WorldMap from '../WorldMap';
-import { card } from '../shared';
+import WorldMap from '../../WorldMap';
+// AnalyseTab: absence trends, org snapshot, world map, and workforce distribution charts for HR
+import { card } from '../../shared';
+import { SITE_STATUS_COLORS } from '../../../data';
+
+const SITE_LABELS = { partial: 'Partially Open', closed: 'Closed', open: 'Open' };
 
 const PERIODS = [
   { key: 'week',    label: 'This Week' },
@@ -11,7 +16,7 @@ const PERIODS = [
   { key: 'quarter', label: 'This Quarter' },
 ];
 
-// Pill filter button helper — scoped to this tab only.
+// Pill filter button helper, scoped to this tab only.
 function FilterPill({ active, onClick, label }) {
   return (
     <button onClick={onClick} style={{
@@ -56,8 +61,8 @@ function OrgSnapshotTable({ data }) {
             return (
               <tr key={d.dept} style={{ borderBottom: '1px solid #f9fafb', background: i % 2 === 0 ? 'transparent' : '#fafafa' }}>
                 <td style={{ padding: '10px', fontWeight: 700, color: '#1e1b4b' }}>{d.dept}</td>
-                <td style={{ padding: '10px', textAlign: 'right', color: '#6366f1', fontWeight: 600 }}>{d.inOffice}</td>
-                <td style={{ padding: '10px', textAlign: 'right', color: '#8b5cf6', fontWeight: 600 }}>{d.wfh}</td>
+                <td style={{ padding: '10px', textAlign: 'right', color: '#10b981', fontWeight: 600 }}>{d.inOffice}</td>
+                <td style={{ padding: '10px', textAlign: 'right', color: '#6366f1', fontWeight: 600 }}>{d.wfh}</td>
                 <td style={{ padding: '10px', textAlign: 'right', color: '#f472b6', fontWeight: 600 }}>{d.absent}</td>
                 <td style={{ padding: '10px', textAlign: 'right', color: '#a5b4fc', fontWeight: 600 }}>{d.onLeave}</td>
                 <td style={{ padding: '10px', textAlign: 'right' }}>
@@ -81,10 +86,14 @@ export default function AnalyseTab({
   activeTrend, snapshotView, setSnapshotView,
   stackedPeriod, setStackedPeriod,
   activeSites, workforceTrendStacked, returnForecast,
+  pushStaffAnnouncement, showToast,
 }) {
+  const [selectedSite, setSelectedSite] = useState(null);
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
-
+      {/* The filter bar controls both the department drill-down and the trend period.
+          Both filters are kept in the parent (HRDashboard) rather than local state so
+          that clicking a department in the Overview tab can pre-select it here. */}
       {/* Filter bar */}
       <div style={{ ...card, padding: '14px 18px', marginBottom: 18, display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
@@ -114,8 +123,8 @@ export default function AnalyseTab({
                 <span style={{ fontSize: 10, color: '#9ca3af', marginLeft: 8 }}>drill-down</span>
               </div>
               {[
-                { label: 'In Office', value: drillDept.inOffice, color: '#6366f1' },
-                { label: 'WFH',       value: drillDept.wfh,     color: '#8b5cf6' },
+                { label: 'In Office', value: drillDept.inOffice, color: '#10b981' },
+                { label: 'WFH',       value: drillDept.wfh,     color: '#6366f1' },
                 { label: 'Absent',    value: drillDept.absent,   color: '#f472b6' },
                 { label: 'On Leave',  value: drillDept.onLeave,  color: '#a5b4fc' },
               ].map(s => (
@@ -138,7 +147,7 @@ export default function AnalyseTab({
       <div style={{ ...card, marginBottom: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b' }}>
-            {filterDept === 'All' ? 'Organisation Absence Snapshot' : `${filterDept} — Absence Snapshot`}
+            {filterDept === 'All' ? 'Organisation Absence Snapshot' : `${filterDept}: Absence Snapshot`}
           </h3>
           <div style={{ display: 'flex', gap: 3, background: '#f3f4f6', borderRadius: 10, padding: 3 }}>
             <ViewToggleBtn active={snapshotView === 'bar'} onClick={() => setSnapshotView('bar')} label="Chart" />
@@ -153,8 +162,8 @@ export default function AnalyseTab({
               <YAxis tick={{ fontSize: 9, fill: '#6b7280' }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
               <Legend wrapperStyle={{ fontSize: 10 }} />
-              <Bar dataKey="inOffice" name="In Office" fill="#6366f1" radius={[3,3,0,0]} />
-              <Bar dataKey="wfh"      name="WFH"       fill="#8b5cf6" radius={[3,3,0,0]} />
+              <Bar dataKey="inOffice" name="In Office" fill="#10b981" radius={[3,3,0,0]} />
+              <Bar dataKey="wfh"      name="WFH"       fill="#6366f1" radius={[3,3,0,0]} />
               <Bar dataKey="absent"   name="Absent"    fill="#f472b6" radius={[3,3,0,0]} />
               <Bar dataKey="onLeave"  name="On Leave"  fill="#a5b4fc" radius={[3,3,0,0]} />
             </BarChart>
@@ -166,7 +175,7 @@ export default function AnalyseTab({
 
       {/* Absence Trend + Return Forecast (left) | World Map (right) */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.8fr', gap: 14, marginBottom: 14 }}>
-        {/* Left column — stacked so the two cards fill the map's height */}
+        {/* Left column - stacked so the two cards fill the map's height */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Absence Trend */}
           <div style={card}>
@@ -202,13 +211,13 @@ export default function AnalyseTab({
               return (
                 <div style={{ marginTop: 12, padding: '10px 14px', borderRadius: 10, background: up ? '#fff1f2' : '#f0fdf4', border: `1px solid ${up ? '#fecdd3' : '#bbf7d0'}` }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: up ? '#dc2626' : '#059669' }}>{up ? '↑ Trending up' : '↓ Trending down'}</span>
-                  <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>{up ? '+' : '-'}{pct}% — {up ? 'review advised' : 'improving'}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>{up ? '+' : '-'}{pct}% {up ? '(review advised)' : '(improving)'}</span>
                 </div>
               );
             })()}
           </div>
 
-          {/* Return Forecast — moved up to fill the left column */}
+          {/* Return Forecast - moved up to fill the left column */}
           <div style={card}>
             <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Return Forecast</h3>
             <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Expected returns from absence or leave</p>
@@ -228,11 +237,53 @@ export default function AnalyseTab({
           </div>
         </div>
 
-        {/* Right — World Map */}
-        <div style={card}><WorldMap sites={activeSites} title="Global Site Status" /></div>
+        {/* Right - World Map */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={card}>
+            <WorldMap
+              sites={activeSites}
+              title="Global Site Status"
+              onSiteClick={site => setSelectedSite(s => s?.name === site.name ? null : site)}
+            />
+            {!selectedSite && (
+              <p style={{ fontSize: 10, color: '#9ca3af', marginTop: 8 }}>Click a non-open site to take action</p>
+            )}
+          </div>
+          {selectedSite && (() => {
+            const color = SITE_STATUS_COLORS[selectedSite.status];
+            return (
+              <div style={{ ...card, background: `${color}08`, border: `1.5px solid ${color}40` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: color, display: 'inline-block' }} />
+                      <span style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b' }}>{selectedSite.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color, background: `${color}18`, padding: '2px 8px', borderRadius: 20 }}>{SITE_LABELS[selectedSite.status]}</span>
+                    </div>
+                    <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>
+                      This site is not fully operational. Alert staff or update the status from the Overview tab.
+                    </p>
+                  </div>
+                  <button onClick={() => setSelectedSite(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 18, lineHeight: 1, padding: '0 2px' }}>×</button>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => {
+                      pushStaffAnnouncement?.(`Site update: ${selectedSite.name} is currently ${SITE_LABELS[selectedSite.status].toLowerCase()}. Please follow guidance from your line manager.`, 'alert', '!');
+                      showToast?.(`Alert sent to all staff re: ${selectedSite.name}.`, 'success');
+                      setSelectedSite(null);
+                    }}
+                    style={{ flex: 1, padding: '9px', borderRadius: 9, border: 'none', background: color, color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+                  >Send Site Alert</button>
+                  <button onClick={() => setSelectedSite(null)} style={{ padding: '9px 14px', borderRadius: 9, border: '1.5px solid #e5e7eb', background: 'white', fontFamily: 'inherit', fontSize: 12, cursor: 'pointer', color: '#6b7280', fontWeight: 600 }}>Dismiss</button>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
-      {/* Workforce Distribution — full width */}
+      {/* Workforce Distribution - full width */}
       <div style={card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div>
@@ -257,8 +308,8 @@ export default function AnalyseTab({
             <YAxis tick={{ fontSize: 10, fill: '#6b7280' }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={{ fontFamily: 'inherit', fontSize: 11, borderRadius: 8 }} />
             <Legend wrapperStyle={{ fontSize: 10 }} />
-            <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#6366f1" />
-            <Bar dataKey="wfh"      name="WFH"       stackId="a" fill="#8b5cf6" />
+            <Bar dataKey="inOffice" name="In Office" stackId="a" fill="#10b981" />
+            <Bar dataKey="wfh"      name="WFH"       stackId="a" fill="#6366f1" />
             <Bar dataKey="absent"   name="Absent"    stackId="a" fill="#f472b6" />
             <Bar dataKey="onLeave"  name="On Leave"  stackId="a" fill="#a5b4fc" radius={[3,3,0,0]} />
           </BarChart>

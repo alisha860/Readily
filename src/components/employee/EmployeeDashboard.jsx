@@ -1,19 +1,20 @@
+// EmployeeDashboard: main shell for the Employee view; owns absence/WFH state and announcements
 import { useState } from 'react';
-import { TabBar, PageHeader } from './shared';
-import { EMPLOYEE_DATA } from '../data';
-import TodayTab    from './employee/TodayTab';
-import MyRecordTab from './employee/MyRecordTab';
+import { TabBar, PageHeader } from '../shared';
+import { EMPLOYEE_DATA } from '../../data';
+import TodayTab    from './tabs/TodayTab';
+import MyRecordTab from './tabs/MyRecordTab';
 
 export default function EmployeeDashboard({ user, showToast, absences, onAbsenceSubmit, onCancelAbsence, onWFHSubmit, isAbsent, isWFH, staffAnnouncements = [] }) {
   const { announcements: initialAnnouncements, absenceReasons, absenceDurations } = EMPLOYEE_DATA;
 
-  const [activeTab,   setActiveTab]   = useState('today');
-  const [reportMode,  setReportMode]  = useState('absence');
-  const [reason,      setReason]      = useState('');
-  const [duration,    setDuration]    = useState('');
-  const [handover,    setHandover]    = useState('');
-  const [wfhNote,     setWfhNote]     = useState('');
-  const [dismissed,   setDismissed]   = useState(new Set());
+  const [activeTab, setActiveTab] = useState('today');
+  const [reportMode, setReportMode] = useState('absence');
+  const [reason, setReason] = useState('');
+  const [duration, setDuration] = useState('');
+  const [handover, setHandover] = useState('');
+  const [wfhNote, setWfhNote] = useState('');
+  const [dismissed, setDismissed] = useState(new Set());
   const [localAnnouncements, setLocalAnnouncements] = useState(initialAnnouncements);
 
   const announcements = [...staffAnnouncements, ...localAnnouncements]
@@ -25,9 +26,9 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
     if (!reason || !duration) { showToast('Please select a reason and duration.', 'warning'); return; }
     const today = new Date().toLocaleDateString('en-GB');
     const days  = parseInt(duration) || 1;
-    onAbsenceSubmit({ reason, duration: days, date: today });
+    onAbsenceSubmit({ reason, duration: days, date: today, handover });
     setLocalAnnouncements(prev => [{
-      id: Date.now(), type: 'warning', icon: '🏠',
+      id: Date.now(), type: 'warning', icon: '!',
       text: `You reported an absence starting today: ${reason}, estimated ${duration}.`,
     }, ...prev]);
     showToast('Absence submitted. Your manager has been notified.', 'success');
@@ -37,7 +38,7 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
   const handleSubmitWFH = () => {
     onWFHSubmit();
     setLocalAnnouncements(prev => [{
-      id: Date.now(), type: 'info', icon: '🏠',
+      id: Date.now(), type: 'info', icon: 'i',
       text: `You logged as working from home today${wfhNote ? `: ${wfhNote}` : '.'}`,
     }, ...prev]);
     showToast('WFH status logged. Your team can see you are working remotely.', 'success');
@@ -46,7 +47,7 @@ export default function EmployeeDashboard({ user, showToast, absences, onAbsence
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      <PageHeader name={user.name} subtitle="Employee Dashboard" />
+      <PageHeader name={user.name} />
 
       <TabBar
         active={activeTab}

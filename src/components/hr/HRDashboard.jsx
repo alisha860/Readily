@@ -1,15 +1,16 @@
+// HRDashboard: main shell for the HR Manager view; owns all HR state and passes it to tab components
 import { useState } from 'react';
 import SiteStatusStrip from './SiteStatusStrip';
-import { TabBar, PageHeader } from './shared';
-import { HR_DATA } from '../data';
-import { buildRiskSummary, getCoverageStatus } from '../utils/statusUtils';
-import OverviewTab from './hr/OverviewTab';
-import AnalyseTab  from './hr/AnalyseTab';
-import ReportsTab  from './hr/ReportsTab';
+import { TabBar, PageHeader } from '../shared';
+import { HR_DATA } from '../../data';
+import { buildRiskSummary, getCoverageStatus } from '../../utils/statusUtils';
+import OverviewTab from './tabs/OverviewTab';
+import AnalyseTab  from './tabs/AnalyseTab';
+import ReportsTab  from './tabs/ReportsTab';
 
 const PIE_COLORS = {
-  inOffice: '#6366f1',
-  wfh:      '#8b5cf6',
+  inOffice: '#10b981',
+  wfh:      '#6366f1',
   absent:   '#f472b6',
   onLeave:  '#a5b4fc',
 };
@@ -42,6 +43,9 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
   const activeTrend      = absenceTrendsByPeriod[filterPeriod];
   const drillDept        = filterDept !== 'All' ? orgAbsenceSnapshot.find(d => d.dept === filterDept) : null;
 
+  // Adjust the base staff counts to reflect live employee actions: when Simone reports
+  // absent or WFH on the Employee dashboard, the HR charts and absence rate update immediately
+  // without a page reload, simulating a real-time data feed.
   const liveAbsent = staffStatus.absent + (employeeAbsent ? 1 : 0);
   const liveWFH    = staffStatus.wfh    + (employeeWFH    ? 1 : 0);
 
@@ -63,12 +67,19 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
   const operationalSites = activeSites.filter(s => s.status === 'open' || s.status === 'partial').length;
   const openEscalations  = escalations.filter(e => e.status === 'open');
 
+  // Readiness status uses two independent signals: active risk items AND the raw absence rate.
+  // The absence rate check is a safety net: even if all risks are resolved, an extremely high
+  // absence rate (>15%) still warrants a RED because the organisation is clearly under strain.
   const unresolvedCritical = riskSummary.find(r => r.level === 'Critical');
   const unresolvedWarning  = riskSummary.some(r => r.level === 'Warning');
   const readiness = unresolvedCritical || absenceRate > 15 ? 'RED'
     : unresolvedWarning  || absenceRate > 10 ? 'AMBER'
     : 'GREEN';
 
+  // Readiness score starts at 100 and is penalised for each risk and for elevated absence.
+  // Critical risks cost -20 each (twice Warning) because they represent breached minimums,
+  // not just thin cover. The absence penalty only kicks in above 8% (the organisation average)
+  // so normal daily variation does not drag the score down unnecessarily.
   const readinessScore = Math.max(0, Math.min(100,
     100 - criticalAlerts * 20 - warningAlerts * 8 - Math.max(0, (absenceRate - 8) * 2)
   ));
@@ -82,7 +93,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      <PageHeader name={user.name} subtitle="HR Manager Dashboard" />
+      <PageHeader name={user.name} />
 
       {/* Live absence alert */}
       {employeeAbsent && (
@@ -93,7 +104,7 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
           fontSize: 12, color: '#92400e',
         }}>
           <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f97316', flexShrink: 0 }} />
-          <span><strong>New self-reported absence</strong> — Simone has reported absent. Absence rate updated.</span>
+          <span><strong>New self-reported absence:</strong> Simone has reported absent. Absence rate updated.</span>
         </div>
       )}
 
@@ -167,6 +178,8 @@ export default function HRDashboard({ user, showToast, employeeAbsent, employeeW
           activeSites={activeSites}
           workforceTrendStacked={workforceTrendStacked}
           returnForecast={returnForecast}
+          pushStaffAnnouncement={pushStaffAnnouncement}
+          showToast={showToast}
         />
       )}
 

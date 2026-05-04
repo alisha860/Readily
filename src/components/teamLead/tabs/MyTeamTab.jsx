@@ -1,5 +1,6 @@
+// MyTeamTab: today's focus, KPIs, absences, critical roles, and weekly schedule for Team Lead
 import TeamLocator from '../TeamLocator';
-import { card, Avatar, StatCard, EmptyState } from '../shared';
+import { card, Avatar, StatCard, EmptyState, DashboardSection } from '../../shared';
 
 const STATUS_CONFIG = {
   available: { dot: '#10b981', label: 'In',  labelColor: '#059669' },
@@ -14,8 +15,58 @@ export default function MyTeamTab({
   escalation, setEscalation,
   showModal, setShowModal, setEscalateTarget,
 }) {
+  const absentPct = team.length > 0 ? Math.round(absentCount / team.length * 100) : 0;
+
+  // Today's Focus uses a priority hierarchy: a missing critical role always takes precedence
+  // over a high absence rate, so the team lead sees the most actionable issue first.
+  // The absence threshold (>15%) matches the organisation-wide RED threshold in HRDashboard.
+  const focusCritical = criticalUnavailable.length > 0;
+  const focusAbsence  = !focusCritical && absentPct > 15;
+
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
+      {/* Today's Focus */}
+      <div style={{
+        ...card, marginBottom: 14,
+        background: focusCritical ? '#fff1f2' : focusAbsence ? '#fffbeb' : '#f0fdf4',
+        border: `1.5px solid ${focusCritical ? '#fecdd3' : focusAbsence ? '#fde68a' : '#bbf7d0'}`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: focusCritical ? '#991b1b' : focusAbsence ? '#92400e' : '#065f46', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 3 }}>
+              Today's Focus
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: focusCritical ? '#991b1b' : focusAbsence ? '#92400e' : '#065f46' }}>
+              {focusCritical
+                ? `Arrange cover for ${criticalUnavailable[0].role}`
+                : focusAbsence
+                ? `Team at ${absentPct}% absence. Review your cover plan.`
+                : 'Team fully covered. No action needed.'}
+            </div>
+            {(focusCritical || focusAbsence) && (
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
+                {focusCritical
+                  ? `${criticalUnavailable.length} critical role${criticalUnavailable.length === 1 ? ' is' : 's are'} currently uncovered`
+                  : `${absentCount} of ${team.length} members absent today`}
+              </div>
+            )}
+          </div>
+          {(focusCritical || focusAbsence) && (
+            <button
+              disabled={!!escalation}
+              onClick={() => { setEscalateTarget(null); setShowModal(true); }}
+              style={{
+                padding: '9px 16px', borderRadius: 10, border: 'none', flexShrink: 0,
+                background: escalation ? '#fee2e2' : focusCritical ? '#dc2626' : '#d97706',
+                color: escalation ? '#dc2626' : 'white',
+                fontFamily: 'inherit', fontWeight: 700, fontSize: 12,
+                cursor: escalation ? 'default' : 'pointer',
+              }}
+            >{escalation ? 'Escalation Active' : 'Escalate to HR'}</button>
+          )}
+        </div>
+      </div>
+
       {/* KPI strip */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         <StatCard
@@ -33,41 +84,16 @@ export default function MyTeamTab({
         />
       </div>
 
-      {/* Attention needed alert */}
-      {openIssues > 0 && (
-        <div style={{ ...card, marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, background: '#fffbeb', border: '1.5px solid #fde68a' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#92400e' }}>Attention Needed</div>
-            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-              {unavailableMembers.length} absence{unavailableMembers.length === 1 ? '' : 's'} logged today
-              {criticalUnavailable.length ? `, including ${criticalUnavailable.length} critical role${criticalUnavailable.length === 1 ? '' : 's'}` : ''}.
-            </div>
-          </div>
-          <button
-            disabled={!!escalation}
-            onClick={() => { setEscalateTarget(null); setShowModal(true); }}
-            style={{
-              padding: '9px 14px', borderRadius: 10, border: 'none',
-              background: escalation ? '#fee2e2' : '#d97706',
-              color: escalation ? '#dc2626' : 'white',
-              fontFamily: 'inherit', fontWeight: 800, fontSize: 12,
-              cursor: escalation ? 'default' : 'pointer', flexShrink: 0,
-            }}
-          >{escalation ? 'Escalation Active' : 'Escalate to HR'}</button>
-        </div>
-      )}
-
       {/* Absences + Critical Roles grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1.05fr 0.95fr', gap: 14, marginBottom: 14 }}>
-        {/* Absences card */}
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 3 }}>Absences</h3>
-              <p style={{ fontSize: 11, color: '#9ca3af' }}>People currently marked as absent</p>
-            </div>
-            <span style={{ fontSize: 22, fontWeight: 900, color: absentCount ? '#dc2626' : '#059669', lineHeight: 1 }}>{absentCount}</span>
-          </div>
+
+        <DashboardSection
+          title="Absences"
+          subtitle="People currently marked as absent"
+          action={<span style={{ fontSize: 22, fontWeight: 900, color: absentCount ? '#dc2626' : '#059669', lineHeight: 1 }}>{absentCount}</span>}
+          collapsible
+          defaultOpen={unavailableMembers.length > 0}
+        >
           {unavailableMembers.length === 0
             ? <EmptyState title="No absences today" message="The team is fully covered." />
             : (
@@ -89,8 +115,13 @@ export default function MyTeamTab({
                         )}
                       </div>
                       <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
-                        {member.reason || 'Unavailable'}{member.daysAbsent ? ` - ${member.daysAbsent}d out` : ''}{member.expectedReturn ? ` - expected back ${member.expectedReturn}` : ''}
+                        {member.reason || 'Unavailable'}{member.daysAbsent ? ` - ${member.daysAbsent}d out` : ''}{member.expectedReturn ? ` - back ${member.expectedReturn}` : ''}
                       </div>
+                      {member.handoverNotes && (
+                        <div style={{ fontSize: 11, color: '#7c3aed', marginTop: 3 }}>
+                          Handover: {member.handoverNotes}
+                        </div>
+                      )}
                     </div>
                     <div style={{ textAlign: 'right', flexShrink: 0 }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: '#6b7280' }}>{member.location}</div>
@@ -101,19 +132,13 @@ export default function MyTeamTab({
               </div>
             )
           }
-        </div>
+        </DashboardSection>
 
-        {/* Critical Roles card */}
-        <div style={card}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
-            <div>
-              <h3 style={{ fontSize: 13, fontWeight: 800, color: '#1e1b4b', marginBottom: 3 }}>Critical Roles</h3>
-              <p style={{ fontSize: 11, color: '#9ca3af' }}>Essential roles that must remain covered</p>
-            </div>
-            <span style={{ fontSize: 22, fontWeight: 900, color: criticalUnavailable.length ? '#d97706' : '#059669', lineHeight: 1 }}>
-              {availableCritical}/{criticalMembers.length}
-            </span>
-          </div>
+        <DashboardSection
+          title="Critical Roles"
+          subtitle="Essential roles that must remain covered"
+          action={<span style={{ fontSize: 22, fontWeight: 900, color: criticalUnavailable.length ? '#d97706' : '#059669', lineHeight: 1 }}>{availableCritical}/{criticalMembers.length}</span>}
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {criticalMembers.map(member => {
               const sc = STATUS_CONFIG[member.status] || STATUS_CONFIG.available;
@@ -122,7 +147,7 @@ export default function MyTeamTab({
                   <Avatar initials={member.initials} size={32} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 12, fontWeight: 800, color: '#1e1b4b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{member.name}</div>
-                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{member.role} — {member.location}</div>
+                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 2 }}>{member.role}, {member.location}</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: sc.dot }} />
@@ -132,11 +157,13 @@ export default function MyTeamTab({
               );
             })}
           </div>
-        </div>
+        </DashboardSection>
       </div>
 
       {/* Weekly schedule */}
-      <TeamLocator team={team} />
+      <DashboardSection title="Weekly Schedule" collapsible defaultOpen={false}>
+        <TeamLocator team={team} />
+      </DashboardSection>
     </div>
   );
 }

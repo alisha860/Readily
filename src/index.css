@@ -5,7 +5,7 @@
 }
 
 :root {
-  /* accent — JS-updated on theme change */
+  /* accent - JS-updated on theme change */
   --accent:     #7c3aed;
   --accent-a04: rgba(124,58,237,0.04);
   --accent-a06: rgba(124,58,237,0.06);

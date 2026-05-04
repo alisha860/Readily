@@ -1,10 +1,7 @@
+// OverviewTab: readiness score, risk management, department coverage, and staff alerts for HR
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { card, StatCard, StatusBadge, EmptyState, LastUpdated } from '../shared';
-import { getCoverageStatus } from '../../utils/statusUtils';
-
-const PIE_COLORS = {
-  inOffice: '#6366f1', wfh: '#8b5cf6', absent: '#f472b6', onLeave: '#a5b4fc',
-};
+import { card, StatCard, StatusBadge, EmptyState, DashboardSection } from '../../shared';
+import { getCoverageStatus } from '../../../utils/statusUtils';
 
 export default function OverviewTab({
   kpis, staffStatus, pieData, absenceRate,
@@ -60,7 +57,6 @@ export default function OverviewTab({
       )}
 
       {/* KPI strip */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}><LastUpdated /></div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
         {kpis.map(k => <StatCard key={k.label} label={k.label} value={k.value} sub={k.sub} color={k.color} />)}
       </div>
@@ -209,7 +205,11 @@ export default function OverviewTab({
                         <StatusBadge status={coverageStatus.level} />
                         {belowMin && !isDeploying && (
                           <button
-                            onClick={e => { e.stopPropagation(); setDeployTarget(dept.name); setDeployAmount(Math.max(1, dept.min - dept.current)); }}
+                            // Default to (min - current + 6) so one deployment takes the dept
+                            // past the Warning buffer (min to min+5) all the way to Stable.
+                            // Deploying exactly (min - current) would land at the minimum,
+                            // still inside Warning range, and the risk would not be resolved.
+                            onClick={e => { e.stopPropagation(); setDeployTarget(dept.name); setDeployAmount(Math.max(1, dept.min - dept.current + 6)); }}
                             style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 6, border: '1.5px solid #dc2626', background: '#fff1f2', color: '#dc2626', cursor: 'pointer', fontFamily: 'inherit' }}
                           >Deploy Reserve</button>
                         )}
@@ -223,7 +223,7 @@ export default function OverviewTab({
                     </div>
                     <div style={{ fontSize: 10, color: belowMin ? '#dc2626' : '#9ca3af', fontWeight: belowMin ? 700 : 400 }}>
                       {dept.current} present / min. {dept.min} required
-                      {belowMin && <span style={{ marginLeft: 5 }}>⚠ {dept.min - dept.current} below</span>}
+                      {belowMin && <span style={{ marginLeft: 5 }}>{dept.min - dept.current} below min</span>}
                     </div>
                   </div>
 
@@ -260,24 +260,24 @@ export default function OverviewTab({
       </div>
 
       {/* Alert Staff panel */}
-      <div style={{ ...card, marginTop: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap: 'wrap' }}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', whiteSpace: 'nowrap' }}>Alert Staff</h3>
-          <p style={{ fontSize: 12, color: '#9ca3af', flex: 1 }}>Send a dashboard announcement to employees</p>
-          <div style={{ display: 'flex', gap: 7, flexShrink: 0, flexWrap: 'wrap' }}>
-            {[
-              { key: 'alert', label: 'Site closure',    text: 'Your site has a change in operational status. Please check the site status strip for updates.' },
-              { key: 'info',  label: 'Policy reminder', text: 'Reminder: all WFH days must be logged in the system before 9am.' },
-            ].map(t => (
-              <button key={t.key} onClick={() => { setAlertMsg(t.text); setAlertType(t.key); }} style={{
-                fontSize: 11, padding: '5px 13px', borderRadius: 20,
-                border: `1.5px solid ${alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#d1d5db'}`,
-                background: alertType === t.key && alertMsg === t.text ? 'rgba(124,58,237,0.08)' : 'white',
-                color: alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#6b7280',
-                cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.12s',
-              }}>{t.label}</button>
-            ))}
-          </div>
+      <DashboardSection
+        title="Alert Staff"
+        subtitle="Send a dashboard announcement to employees"
+        style={{ marginTop: 14 }}
+      >
+        <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 12 }}>
+          {[
+            { key: 'alert', label: 'Site closure',    text: 'Your site has a change in operational status. Please check the site status strip for updates.' },
+            { key: 'info',  label: 'Policy reminder', text: 'Reminder: all WFH days must be logged in the system before 9am.' },
+          ].map(t => (
+            <button key={t.key} onClick={() => { setAlertMsg(t.text); setAlertType(t.key); }} style={{
+              fontSize: 11, padding: '5px 13px', borderRadius: 20,
+              border: `1.5px solid ${alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#d1d5db'}`,
+              background: alertType === t.key && alertMsg === t.text ? 'rgba(124,58,237,0.08)' : 'white',
+              color: alertType === t.key && alertMsg === t.text ? '#7c3aed' : '#6b7280',
+              cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500, transition: 'all 0.12s',
+            }}>{t.label}</button>
+          ))}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           <textarea
@@ -289,8 +289,7 @@ export default function OverviewTab({
           <button
             disabled={!alertMsg.trim()}
             onClick={() => {
-              const icons = { alert: '🏢', info: '📋' };
-              pushStaffAnnouncement?.(alertMsg.trim(), alertType, icons[alertType] || '📢');
+              pushStaffAnnouncement?.(alertMsg.trim(), alertType, '!');
               showToast('Announcement sent to all staff.', 'success');
               setAlertMsg('');
             }}
@@ -305,7 +304,7 @@ export default function OverviewTab({
             }}
           >Send</button>
         </div>
-      </div>
+      </DashboardSection>
     </div>
   );
 }

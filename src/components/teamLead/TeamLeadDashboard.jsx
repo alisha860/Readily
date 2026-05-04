@@ -1,8 +1,9 @@
+// TeamLeadDashboard: main shell for the Team Lead view; owns team state, escalation logic, and pieData
 import { useState } from 'react';
-import { TabBar, PageHeader } from './shared';
-import { TEAM_LEAD_DATA } from '../data';
-import MyTeamTab    from './teamLead/MyTeamTab';
-import AnalyticsTab from './teamLead/AnalyticsTab';
+import { TabBar, PageHeader } from '../shared';
+import { TEAM_LEAD_DATA } from '../../data';
+import MyTeamTab    from './tabs/MyTeamTab';
+import AnalyticsTab from './tabs/AnalyticsTab';
 
 function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   const [notes, setNotes] = useState('');
@@ -49,7 +50,7 @@ function EscalateModal({ onClose, showToast, onConfirm, memberName }) {
   );
 }
 
-export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, employeeExpectedReturn, addNotification, createEscalation }) {
+export default function TeamLeadDashboard({ user, showToast, employeeAbsent, employeeWFH, employeeExpectedReturn, employeeHandover, addNotification, createEscalation }) {
   const [activeTab,      setActiveTab]      = useState('team');
   const [showModal,      setShowModal]      = useState(false);
   const [escalateTarget, setEscalateTarget] = useState(null);
@@ -57,6 +58,9 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
 
   const { team: baseTeam, comparisonData, sites, wfhVsAbsentTrend, siteAvailability } = TEAM_LEAD_DATA;
 
+  // Simone's entry in the team list is flagged with isEmployee so her status can be driven
+  // by the live state passed down from App, rather than the static data in TEAM_LEAD_DATA.
+  // This creates the cross-role effect: actions on the Employee dashboard appear here instantly.
   const team = baseTeam.map(m => {
     if (m.isEmployee) {
       const liveScheduleStatus = employeeAbsent ? 'absent' : employeeWFH ? 'wfh' : 'office';
@@ -67,6 +71,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
         absenceCategory: employeeAbsent ? 'health' : m.absenceCategory,
         healthStatus: employeeAbsent ? 'symptomatic' : employeeWFH ? 'healthy' : m.healthStatus,
         expectedReturn: employeeAbsent ? (employeeExpectedReturn ?? 'TBC') : m.expectedReturn,
+        handoverNotes: employeeAbsent ? employeeHandover : '',
         desk: employeeWFH || employeeAbsent ? null : m.desk,
         schedule: { ...m.schedule, Tue: liveScheduleStatus },
       };
@@ -87,10 +92,12 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
   const markerPos = Math.min((absentPct / threshold.max) * 100, 99);
   const readiness = absentPct > 25 ? 'RED' : absentPct > 15 ? 'AMBER' : 'GREEN';
 
+  // Filter out zero-value segments so the donut chart never shows empty slices.
+  // An empty slice renders as a thin invisible arc that looks like a rendering glitch.
   const pieData = [
-    { name: 'Absent', value: absentPct, color: '#db2777' },
+    { name: 'In',     value: inPct,     color: '#7c3aed' },
     { name: 'WFH',    value: wfhPct,    color: '#6366f1' },
-    { name: 'In',     value: inPct,     color: '#e9d5ff' },
+    { name: 'Absent', value: absentPct, color: '#f472b6' },
   ].filter(d => d.value > 0);
 
   const unavailableMembers  = team.filter(m => m.status === 'absent');
@@ -101,7 +108,7 @@ export default function TeamLeadDashboard({ user, showToast, employeeAbsent, emp
 
   return (
     <div style={{ animation: 'slideUp 0.3s ease' }}>
-      <PageHeader name={user.name} subtitle="Team Lead Dashboard" />
+      <PageHeader name={user.name} />
 
       {/* Escalation active banner */}
       {escalation && (

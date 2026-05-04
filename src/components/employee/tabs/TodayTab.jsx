@@ -1,21 +1,7 @@
-import { card } from '../shared';
-import { EMPLOYEE_DATA } from '../../data';
+// TodayTab: daily status reporting (absence or WFH), team overview, and announcements for Employee
+import { card, Avatar, DashboardSection } from '../../shared';
+import { EMPLOYEE_DATA } from '../../../data';
 
-const DESK_MAP = {
-  A: ['closed', 'present', 'present', 'present', 'closed', 'closed', 'closed', 'remote'],
-  B: ['present', 'closed', 'closed', 'present', 'present', 'remote', 'closed', 'present'],
-  C: ['remote',  'closed', 'yours',  'remote',  'closed',  'closed', 'present', 'closed'],
-};
-
-const DESK_STYLES = {
-  present: { bg: '#dcfce7', border: '#16a34a', color: '#15803d' },
-  closed:  { bg: '#fef3c7', border: '#d97706', color: '#92400e' },
-  remote:  { bg: '#dbeafe', border: '#93c5fd', color: '#1d4ed8' },
-  yours:   { bg: '#ffffff', border: '#ec4899', color: '#ec4899' },
-  empty:   { bg: '#ffffff', border: '#e5e7eb', color: '#9ca3af' },
-};
-
-// Background tint per announcement type.
 const ANNOUNCEMENT_STYLES = {
   alert:   { bg: '#fff1f2', border: '#fecdd3', iconBg: '#fee2e2' },
   info:    { bg: '#f0f9ff', border: '#bae6fd', iconBg: '#e0f2fe' },
@@ -36,6 +22,19 @@ export default function TodayTab({
   showToast,
 }) {
   const { myTeam, absenceReasons, absenceDurations } = EMPLOYEE_DATA;
+
+  const availableCount = myTeam.filter(m => m.status === 'available').length;
+  const absentCount    = myTeam.filter(m => m.status === 'absent').length;
+  const teamPct        = Math.round(availableCount / myTeam.length * 100);
+  // Thresholds: >=75% available is Green (well covered), >=50% is Amber (short but manageable),
+  // below 50% is Red (critically short). These drive the Team Today card's messaging and colour.
+  const teamStatus     = teamPct >= 75 ? 'green' : teamPct >= 50 ? 'amber' : 'red';
+  const statusConfig   = {
+    green: { bg: '#f0fdf4', border: '#bbf7d0', badgeBg: '#d1fae5', badgeText: '#065f46', label: 'Fully Covered',    desc: 'Your team is fully covered today. No action needed.' },
+    amber: { bg: '#fffbeb', border: '#fde68a', badgeBg: '#fef3c7', badgeText: '#92400e', label: 'Team is Short',     desc: `${absentCount} teammate${absentCount === 1 ? ' is' : 's are'} out today. Cover may be needed.` },
+    red:   { bg: '#fff1f2', border: '#fecdd3', badgeBg: '#fee2e2', badgeText: '#991b1b', label: 'Critically Short',  desc: 'Most of your team is unavailable. Report your status immediately.' },
+  };
+  const sc = statusConfig[teamStatus];
 
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
@@ -67,31 +66,6 @@ export default function TodayTab({
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
 
-        {/* Announcements */}
-        <div style={card}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 12 }}>Announcements</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {announcements.map(a => {
-              const s = ANNOUNCEMENT_STYLES[a.type] || ANNOUNCEMENT_STYLES.info;
-              return (
-                <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: '8px 10px' }}>
-                  <span style={{ width: 22, height: 22, borderRadius: '50%', background: s.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>{a.icon}</span>
-                  <span style={{ fontSize: 11, color: '#374151', lineHeight: 1.4, flex: 1 }}>{a.text}</span>
-                  <button onClick={() => dismissAnnouncement(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 14, lineHeight: 1, padding: '0 2px', flexShrink: 0 }} title="Dismiss">×</button>
-                </div>
-              );
-            })}
-          </div>
-          {/* Prompt to My Record */}
-          <div onClick={() => setActiveTab('record')} style={{ marginTop: 14, padding: '11px 14px', borderRadius: 12, background: '#f8f7ff', border: '1px solid #e9d5ff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed' }}>View my absence record</div>
-              <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>Bradford score, allowance, history</div>
-            </div>
-            <span style={{ fontSize: 16, color: '#c4b5fd' }}>→</span>
-          </div>
-        </div>
-
         {/* Report Today form */}
         <div style={card}>
           <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 14 }}>Report Today</h3>
@@ -104,7 +78,6 @@ export default function TodayTab({
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Mode toggle */}
               <div style={{ display: 'flex', background: '#f3f4f6', borderRadius: 12, padding: 4, gap: 4 }}>
                 {[{ key: 'absence', label: 'Report Absence' }, { key: 'wfh', label: 'Working from Home' }].map(m => (
                   <button key={m.key} onClick={() => setReportMode(m.key)} style={{
@@ -162,61 +135,78 @@ export default function TodayTab({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Site Overview — desk map */}
-      <div style={{ ...card, marginTop: 14 }}>
-        <div style={{ marginBottom: 14 }}>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Site Overview</h3>
-          <p style={{ fontSize: 11, color: '#6b7280' }}>London - Team Bay A</p>
-        </div>
-
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 14 }}>
-          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#d1fae5', border: '1px solid #6ee7b7', textAlign: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#065f46' }}>15 Present</span>
+        {/* Team Today */}
+        <div style={card}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+            <div>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>Team Today</h3>
+              <p style={{ fontSize: 11, color: '#9ca3af' }}>{availableCount} of {myTeam.length} available</p>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: sc.badgeBg, color: sc.badgeText }}>{sc.label}</span>
           </div>
-          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#fef3c7', border: '1px solid #fcd34d', textAlign: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>14 Desks Closed</span>
-          </div>
-          <div style={{ padding: '9px 14px', borderRadius: 10, background: '#dbeafe', border: '1px solid #93c5fd', textAlign: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#1e40af' }}>3 Remote</span>
-          </div>
-        </div>
 
-        {/* Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 6 }}>
-          <span style={{ fontSize: 13 }}>⚠️</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b' }}>Status: Reduced Capacity</span>
-        </div>
-        <p style={{ fontSize: 11, color: '#6b7280', marginBottom: 16 }}>View current on-site presence and availability</p>
-
-        {/* Desk rows */}
-        {Object.entries(DESK_MAP).map(([row, desks]) => (
-          <div key={row} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', width: 14, flexShrink: 0 }}>{row}</span>
-            {desks.map((status, i) => {
-              const label = `${row}${i + 1}`;
-              const s = DESK_STYLES[status] || DESK_STYLES.empty;
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 14 }}>
+            {myTeam.map(m => {
+              const isOut = m.status === 'absent';
               return (
-                <div key={label} style={{
-                  flex: 1, height: 36, borderRadius: 8,
-                  background: s.bg, border: `1.5px solid ${s.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: s.color }}>{label}</span>
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 10, background: isOut ? '#fff1f2' : '#f9fafb', border: `1px solid ${isOut ? '#fecdd3' : '#e5e7eb'}` }}>
+                  <Avatar initials={m.initials} size={30} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: isOut ? '#9ca3af' : '#1e1b4b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name.split(' ')[0]}</div>
+                    <div style={{ fontSize: 10, color: isOut ? '#dc2626' : '#059669', fontWeight: 600 }}>{isOut ? 'Absent' : 'Available'}</div>
+                  </div>
+                  <div style={{ width: 7, height: 7, borderRadius: '50%', background: isOut ? '#ef4444' : '#10b981', flexShrink: 0 }} />
                 </div>
               );
             })}
           </div>
-        ))}
 
-        {/* Legend */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
-          <div style={{ width: 16, height: 16, borderRadius: '50%', border: '1.5px solid #ec4899', background: 'white', flexShrink: 0 }} />
-          <span style={{ fontSize: 11, color: '#6b7280' }}>Your Allocation</span>
+          {isAbsent ? (
+            <div style={{ padding: '11px 14px', borderRadius: 10, background: '#fffbeb', border: '1px solid #fde68a' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#92400e' }}>You're logged as absent</span>
+              <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 6 }}>Your manager has been notified.</span>
+            </div>
+          ) : isWFH ? (
+            <div style={{ padding: '11px 14px', borderRadius: 10, background: '#eef2ff', border: '1px solid #c7d2fe' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#3730a3' }}>You're working remotely</span>
+              <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 6 }}>Your team can see your status.</span>
+            </div>
+          ) : (
+            <div style={{ padding: '11px 14px', borderRadius: 10, background: sc.bg, border: `1px solid ${sc.border}` }}>
+              <span style={{ fontSize: 12, color: '#374151', lineHeight: 1.4 }}>{sc.desc}</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Announcements */}
+      <DashboardSection
+        title="Announcements"
+        collapsible
+        defaultOpen={announcements.length > 0}
+        style={{ marginTop: 14 }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+          {announcements.map(a => {
+            const s = ANNOUNCEMENT_STYLES[a.type] || ANNOUNCEMENT_STYLES.info;
+            return (
+              <div key={a.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10, padding: '8px 10px' }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', background: s.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0 }}>{a.icon}</span>
+                <span style={{ fontSize: 11, color: '#374151', lineHeight: 1.4, flex: 1 }}>{a.text}</span>
+                <button onClick={() => dismissAnnouncement(a.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', fontSize: 14, lineHeight: 1, padding: '0 2px', flexShrink: 0 }} title="Dismiss">×</button>
+              </div>
+            );
+          })}
+        </div>
+        <div onClick={() => setActiveTab('record')} style={{ marginTop: 14, padding: '11px 14px', borderRadius: 12, background: '#f8f7ff', border: '1px solid #e9d5ff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed' }}>View my absence record</div>
+            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>Allowance, history and contacts</div>
+          </div>
+          <span style={{ fontSize: 16, color: '#c4b5fd' }}>→</span>
+        </div>
+      </DashboardSection>
     </div>
   );
 }

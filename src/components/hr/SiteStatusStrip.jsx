@@ -1,13 +1,13 @@
-import { SITE_STATUS_COLORS } from '../data';
+// SiteStatusStrip: compact pill strip showing site operational status; HR can click to cycle status
+import { SITE_STATUS_COLORS } from '../../data';
 
 const STATUS_LABELS = {
   open:    'Open',
   partial: 'Partial',
-  reduced: 'Reduced',
   closed:  'Closed',
 };
 
-const STATUS_CYCLE = ['open', 'partial', 'reduced', 'closed'];
+const STATUS_CYCLE = ['open', 'partial', 'closed'];
 
 export default function SiteStatusStrip({ sites = [], onViewMap, onStatusChange }) {
   const interactive = !!onStatusChange;

@@ -1,3 +1,4 @@
+// themes.js: colour theme definitions and per-role defaults, applied as CSS variables in App.jsx
 export const THEMES = [
   {
     id: 'violet', name: 'Violet', swatch: '#7c3aed',

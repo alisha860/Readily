@@ -1,3 +1,4 @@
+// DeskMap: floor plan showing desk availability; employee can click to book a desk for the next day
 import { useState, useRef } from 'react';
 
 const DESK_CONFIG = {
@@ -142,7 +143,7 @@ export default function DeskMap({ booking, isWFH = false, showToast }) {
               <span style={{ fontSize: 10, fontWeight: 700, color: '#d1d5db', width: 18, textAlign: 'center', flexShrink: 0 }}>
                 {row.id}
               </span>
-              {/* Desks — wider gap every 2 to group into pairs */}
+              {/* Desks - wider gap every 2 to group into pairs */}
               {row.desks.map((desk, i) => {
                 const isMyDesk   = desk.id === myDeskId;
                 const isBooked   = desk.id === bookedDeskId && !confirmed;

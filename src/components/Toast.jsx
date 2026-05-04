@@ -1,3 +1,4 @@
+// Toast: fixed-position notification banner; auto-dismissed by App after 4 seconds
 const STYLES = {
   success: { bg: '#f0fdf4', border: '#10b981', text: '#065f46', icon: '✓' },
   error:   { bg: '#fff1f2', border: '#ef4444', text: '#991b1b', icon: '✕' },

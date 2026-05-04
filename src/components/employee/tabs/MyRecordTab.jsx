@@ -1,8 +1,9 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { card, Avatar } from '../shared';
-import { EMPLOYEE_DATA } from '../../data';
+// MyRecordTab: absence history, allowance overview, monthly chart, and escalation contacts for Employee
+import { card, Avatar } from '../../shared';
+import { EMPLOYEE_DATA } from '../../../data';
 
-// Static stats for Simone's current year — displayed in Absence Overview.
+// Simone's static year-to-date stats, shown in Absence Overview.
 const MY_STATS = {
   daysAbsentYear: 37,
   allowanceTotal: 50,
@@ -10,7 +11,7 @@ const MY_STATS = {
   lastAbsence: '14/04/2026',
 };
 
-// Static current status — shown in the Current Status card below Absence History.
+// Fallback status values used only if live isAbsent/isWFH props are not set.
 const CURRENT_STATUS = {
   status: 'absent',
   reason: 'Sickness',
@@ -19,17 +20,20 @@ const CURRENT_STATUS = {
 };
 
 export default function MyRecordTab({ absences, onCancelAbsence, showToast, isAbsent, isWFH }) {
-  const { myTeam, escalationContacts, monthlyAbsence } = EMPLOYEE_DATA;
+  const { escalationContacts, monthlyAbsence } = EMPLOYEE_DATA;
+  // Cap the allowance bar at 100% with Math.min so the progress bar never overflows its
+  // container if an employee somehow exceeds their allowance.
   const allowancePct = Math.min((MY_STATS.allowanceUsed / MY_STATS.allowanceTotal) * 100, 100);
 
-  // Derive live status — prefer the real isAbsent/isWFH state over the static default.
+  // liveStatus is derived from props passed down from App, which reflect the employee's
+  // most recent self-report. The static CURRENT_STATUS object below is only used for the
+  // absence details (reason, expected return) - it would be replaced by API data in production.
   const liveStatus = isAbsent ? 'absent' : isWFH ? 'wfh' : 'available';
   const statusLabel  = { absent: 'Currently Absent', wfh: 'Working from Home', available: 'Currently Active' };
   const statusColor  = { absent: '#dc2626', wfh: '#6366f1', available: '#059669' };
 
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
-
       {/* Top section: 2-column grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 14, alignItems: 'start', marginBottom: 14 }}>
 
@@ -92,10 +96,10 @@ export default function MyRecordTab({ absences, onCancelAbsence, showToast, isAb
                 </>
               )}
               {liveStatus === 'wfh' && (
-                <div style={{ fontSize: 12, color: '#6366f1' }}>Working remotely today — team has been notified.</div>
+                <div style={{ fontSize: 12, color: '#6366f1' }}>Working remotely today. Your team has been notified.</div>
               )}
               {liveStatus === 'available' && (
-                <div style={{ fontSize: 12, color: '#059669' }}>In office — no action needed.</div>
+                <div style={{ fontSize: 12, color: '#059669' }}>In office. No action needed.</div>
               )}
             </div>
           </div>
@@ -192,22 +196,6 @@ export default function MyRecordTab({ absences, onCancelAbsence, showToast, isAb
         </ResponsiveContainer>
       </div>
 
-      {/* Team Status */}
-      <div style={card}>
-        <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 12 }}>Team Status</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-          {myTeam.map(m => (
-            <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 12, background: 'rgba(5,150,105,0.04)', border: '1px solid rgba(5,150,105,0.08)' }}>
-              <Avatar initials={m.initials} size={36} />
-              <span style={{ flex: 1, fontSize: 12, fontWeight: 600, color: m.status === 'absent' ? '#9ca3af' : '#1e1b4b' }}>{m.name}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: m.status === 'available' ? '#10b981' : '#ef4444' }} />
-                <span style={{ fontSize: 10, fontWeight: 600, color: m.status === 'available' ? '#059669' : '#dc2626' }}>{m.status === 'available' ? 'In' : 'Out'}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// WorldMap: interactive SVG world map showing site locations with status colours and hover tooltips
 import { useState, useRef } from 'react';
 import { ComposableMap, Geographies, Geography, Marker } from 'react-simple-maps';
 import { SITE_STATUS_COLORS } from '../data';
@@ -6,20 +7,21 @@ const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 
 const STATUS_LABELS = {
   partial: 'Partially Open',
-  reduced: 'Reduced Capacity',
   open: 'Open',
   closed: 'Closed',
 };
 
-export default function WorldMap({ sites = [], title = 'Site Locations', siteStats = {} }) {
+export default function WorldMap({ sites = [], title = 'Site Locations', siteStats = {}, onSiteClick }) {
   const [hoveredSite, setHoveredSite] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
 
   const hasStats = Object.keys(siteStats).length > 0;
 
-  // Track position relative to this container so we can use position:absolute
-  // (position:fixed breaks when a parent has backdrop-filter)
+  // The tooltip uses position:absolute relative to this container rather than position:fixed,
+  // because position:fixed is broken by any ancestor with a CSS backdrop-filter; the tooltip
+  // would be clipped or positioned relative to the wrong stacking context.
+  // Tracking mouse position relative to the container's bounding rect corrects for scroll offset.
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -75,6 +77,7 @@ export default function WorldMap({ sites = [], title = 'Site Locations', siteSta
                   style={{ cursor: 'pointer' }}
                   onMouseEnter={() => setHoveredSite({ name, status, stats })}
                   onMouseLeave={() => setHoveredSite(null)}
+                  onClick={() => onSiteClick && status !== 'open' && onSiteClick({ name, status })}
                 />
                 <text
                   x={8} y={4}
@@ -101,7 +104,7 @@ export default function WorldMap({ sites = [], title = 'Site Locations', siteSta
         ))}
       </div>
 
-      {/* Tooltip — absolute so it's unaffected by backdrop-filter on parent */}
+      {/* Tooltip - absolute so it's unaffected by backdrop-filter on parent */}
       {hoveredSite && (
         <div style={{
           position: 'absolute',

@@ -2,8 +2,9 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts';
-import WorldMap from '../WorldMap';
-import { card } from '../shared';
+// AnalyticsTab: absence rate charts, threshold meter, team comparison, and WFH trend for Team Lead
+import WorldMap from '../../WorldMap';
+import { card } from '../../shared';
 
 const COMPARISON_COLORS = ['#7c3aed', '#a5b4fc', '#c4b5fd'];
 
@@ -13,8 +14,38 @@ export default function AnalyticsTab({
   comparisonData, wfhVsAbsentTrend, sites, siteAvailability,
   showToast,
 }) {
+  const bannerColor = readiness === 'RED'
+    ? { bg: '#fff1f2', border: '#fecdd3', text: '#991b1b', btn: '#dc2626' }
+    : readiness === 'AMBER'
+    ? { bg: '#fffbeb', border: '#fde68a', text: '#92400e', btn: '#d97706' }
+    : { bg: '#f0fdf4', border: '#bbf7d0', text: '#065f46', btn: null };
+
   return (
     <div style={{ animation: 'slideUp 0.2s ease' }}>
+      {/* Readiness action banner */}
+      <div style={{ ...card, marginBottom: 14, padding: '14px 18px', background: bannerColor.bg, border: `1.5px solid ${bannerColor.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: bannerColor.text, marginBottom: 3 }}>
+              {readiness === 'RED'   ? 'Team absence is above threshold. Action required.'
+               : readiness === 'AMBER' ? 'Team absence is approaching the limit. Monitor closely.'
+               : 'Team is within safe thresholds. No action needed.'}
+            </div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>
+              {absentCount} of {team.length} members absent today · {absentPct}% absence rate
+              {readiness === 'RED'   ? ' · Immediate escalation to HR recommended' : ''}
+              {readiness === 'AMBER' ? ' · Consider notifying HR if this continues' : ''}
+            </div>
+          </div>
+          {bannerColor.btn && (
+            <button
+              onClick={() => showToast('Absence breach reported to HR.', readiness === 'RED' ? 'error' : 'warning')}
+              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', flexShrink: 0, background: bannerColor.btn, color: 'white', fontFamily: 'inherit', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+            >{readiness === 'RED' ? 'Escalate to HR' : 'Report to HR'}</button>
+          )}
+        </div>
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
 
         {/* Team Absence donut */}
@@ -31,7 +62,7 @@ export default function AnalyticsTab({
               </PieChart>
             </ResponsiveContainer>
             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
-              <div style={{ fontSize: 26, fontWeight: 800, color: '#db2777', lineHeight: 1 }}>{absentPct}%</div>
+              <div style={{ fontSize: 26, fontWeight: 800, color: '#f472b6', lineHeight: 1 }}>{absentPct}%</div>
               <div style={{ fontSize: 10, color: '#6b7280', fontWeight: 500 }}>Absent</div>
             </div>
           </div>
@@ -104,7 +135,7 @@ export default function AnalyticsTab({
 
       {/* WFH vs Absent Trend + World Map */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 14 }}>
-        <div style={card}>
+        <div style={{ ...card, alignSelf: 'start' }}>
           <h3 style={{ fontSize: 13, fontWeight: 700, color: '#1e1b4b', marginBottom: 2 }}>WFH vs Absent Trend</h3>
           <p style={{ fontSize: 11, color: '#9ca3af', marginBottom: 12 }}>Weekly counts</p>
           <ResponsiveContainer width="100%" height={180}>
